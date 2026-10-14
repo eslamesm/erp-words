@@ -11,6 +11,7 @@ import { SyncStatus } from "@/components/SyncStatus";
 import { UpdateCenter } from "@/components/UpdateCenter";
 import { signOut } from "@/lib/auth";
 import { getEnglishVoices, setPreferredVoice, speak, warmUpVoices, type VoiceInfo } from "@/lib/speech";
+import { resizeImageToDataUrl } from "@/lib/avatar";
 import { useT } from "@/hooks/useT";
 import type { Lang } from "@/lib/i18n";
 
@@ -23,7 +24,9 @@ export default function SettingsPage() {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [voices, setVoices] = useState<VoiceInfo[]>([]);
+  const [avatarMsg, setAvatarMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const avatarRef = useRef<HTMLInputElement>(null);
 
   const meta = profile ? PLAN_META[profile.level] : null;
 
@@ -62,6 +65,16 @@ export default function SettingsPage() {
     setImportMsg(ok ? t("set.importOk") : t("set.importBad"));
   }
 
+  async function handleAvatar(file: File) {
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      updateProfile({ avatar: dataUrl });
+      setAvatarMsg(null);
+    } catch {
+      setAvatarMsg(t("set.avatarBad"));
+    }
+  }
+
   function requestNotifyPermission() {
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
       void Notification.requestPermission();
@@ -79,15 +92,57 @@ export default function SettingsPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h2 className="font-bold">{t("set.account")}</h2>
           <div className="mt-3 flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-              {profile.name.charAt(0)}
-            </div>
+            {profile.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.avatar}
+                alt={profile.name}
+                className="h-14 w-14 rounded-2xl object-cover"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                {profile.name.charAt(0)}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <div className="text-lg font-bold">{profile.name}</div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
                 {meta ? `${meta.icon} ${lang === "en" ? meta.titleEn : meta.title}` : "—"} • {profile.xp} XP
               </div>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-sm font-medium">{t("set.avatar")}</div>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{t("set.avatarHint")}</p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              <button
+                onClick={() => avatarRef.current?.click()}
+                className="rounded-xl border-2 border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                {profile.avatar ? t("set.avatarChange") : t("set.avatarUpload")}
+              </button>
+              {profile.avatar && (
+                <button
+                  onClick={() => updateProfile({ avatar: undefined })}
+                  className="rounded-xl border-2 border-rose-300 px-5 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950"
+                >
+                  {t("set.avatarRemove")}
+                </button>
+              )}
+              <input
+                ref={avatarRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleAvatar(f);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+            {avatarMsg && <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{avatarMsg}</p>}
           </div>
           <div className="mt-4">
             <label className="block text-sm font-medium" htmlFor="profile-name">{t("set.editName")}</label>

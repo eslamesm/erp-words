@@ -1,4 +1,4 @@
-import type { AppStats, DailyResult, Level, Profile, PronunciationProgress, WordProgress } from "@/types";
+import type { AppStats, DailyResult, LessonRecord, Level, Profile, PronunciationProgress, WordProgress } from "@/types";
 import { newProgress } from "@/lib/srs";
 import { dayKey, shiftDay } from "@/lib/dates";
 
@@ -11,6 +11,7 @@ const KEY_NOTES = "erp-vocab:notes";
 const KEY_DAILY = "erp-vocab:daily";
 const KEY_CONVERSATIONS = "erp-vocab:conversations";
 const KEY_PRONUNCIATION = "erp-vocab:pronunciation";
+const KEY_LESSONS = "erp-vocab:lessons";
 const KEY_META = "erp-vocab:meta";
 
 export interface Settings {
@@ -59,6 +60,7 @@ export const STORE_NAMES = [
   "daily",
   "conversations",
   "pronunciation",
+  "lessons",
 ] as const;
 export type StoreName = (typeof STORE_NAMES)[number];
 
@@ -282,6 +284,11 @@ export const pronunciationStore = createStore<Record<string, PronunciationProgre
   KEY_PRONUNCIATION,
   {}
 );
+export const lessonsStore = createStore<Record<string, LessonRecord>>(
+  "lessons",
+  KEY_LESSONS,
+  {}
+);
 
 const ALL_STORES = [
   progressStore,
@@ -293,6 +300,7 @@ const ALL_STORES = [
   dailyStore,
   conversationsStore,
   pronunciationStore,
+  lessonsStore,
 ];
 
 export function setProfile(profile: Profile | null) {
@@ -506,8 +514,38 @@ export function getTodayResult(): DailyResult | null {
   return dailyStore.read()[dayKey(0)] ?? null;
 }
 
+// ══ الدرس الخصوصي اليومي ══
+export function ensureLesson(day: string, wordIds: string[]) {
+  if (!day) return;
+  if (lessonsStore.read()[day]) return;
+  lessonsStore.set((all) => {
+    if (all[day]) return all;
+    return { ...all, [day]: { day, wordIds, viewed: [], done: false, startedAt: Date.now() } };
+  });
+}
+
+export function markLessonViewed(day: string, wordId: string) {
+  lessonsStore.set((all) => {
+    const rec = all[day];
+    if (!rec || rec.viewed.includes(wordId)) return all;
+    return { ...all, [day]: { ...rec, viewed: [...rec.viewed, wordId] } };
+  });
+}
+
+export function completeLesson(day: string, score: number, total: number) {
+  lessonsStore.set((all) => {
+    const rec = all[day];
+    if (!rec) return all;
+    return { ...all, [day]: { ...rec, quizScore: score, quizTotal: total, done: true } };
+  });
+}
+
+export function getLesson(day: string) {
+  return day ? lessonsStore.read()[day] ?? null : null;
+}
+
 // ══ نسخ احتياطي: تصدير/استيراد كل البيانات المحلية ══
-const ALL_KEYS = [KEY_PROGRESS, KEY_BOOKMARKS, KEY_STATS, KEY_SETTINGS, KEY_PROFILE, KEY_NOTES, KEY_DAILY, KEY_CONVERSATIONS, KEY_PRONUNCIATION];
+const ALL_KEYS = [KEY_PROGRESS, KEY_BOOKMARKS, KEY_STATS, KEY_SETTINGS, KEY_PROFILE, KEY_NOTES, KEY_DAILY, KEY_CONVERSATIONS, KEY_PRONUNCIATION, KEY_LESSONS];
 
 export function exportData(): string {
   if (typeof window === "undefined") return "{}";
@@ -564,6 +602,7 @@ const OWNER_STORES = [
   KEY_DAILY,
   KEY_CONVERSATIONS,
   KEY_PRONUNCIATION,
+  KEY_LESSONS,
 ];
 const OWNER_PREFIX = "erp-vocab:owner:";
 
@@ -652,6 +691,7 @@ export interface SyncStores {
   daily: Record<string, DailyResult>;
   conversations: string[];
   pronunciation: Record<string, PronunciationProgress>;
+  lessons: Record<string, LessonRecord>;
 }
 
 export interface SyncDoc {
@@ -678,6 +718,7 @@ export function buildSyncDoc(): SyncDoc {
       daily: dailyStore.read(),
       conversations: conversationsStore.read(),
       pronunciation: pronunciationStore.read(),
+      lessons: lessonsStore.read(),
     },
     meta: {
       updatedAt: meta.updatedAt ?? {},
@@ -697,6 +738,7 @@ export function applySyncDoc(doc: SyncDoc) {
   dailyStore.setRaw(doc.stores.daily ?? {});
   conversationsStore.setRaw(doc.stores.conversations ?? []);
   pronunciationStore.setRaw(doc.stores.pronunciation ?? {});
+  lessonsStore.setRaw(doc.stores.lessons ?? {});
   const meta = readMeta();
   meta.updatedAt = { ...(meta.updatedAt ?? {}), ...(doc.meta?.updatedAt ?? {}) };
   meta.marks = { ...(meta.marks ?? {}), ...(doc.meta?.marks ?? {}) };
@@ -900,6 +942,7 @@ function mergeProfile(
     motivational: base.motivational,
     age: base.age ?? a.age ?? b.age,
     nativeLanguage: base.nativeLanguage ?? a.nativeLanguage ?? b.nativeLanguage,
+    avatar: base.avatar ?? a.avatar ?? b.avatar,
     planOverrides: remoteNewer
       ? { ...(a.planOverrides ?? {}), ...(b.planOverrides ?? {}) }
       : { ...(b.planOverrides ?? {}), ...(a.planOverrides ?? {}) },
@@ -908,6 +951,23 @@ function mergeProfile(
       ? { ...(a.weeklyChallenge ?? {}), ...(b.weeklyChallenge ?? {}) }
       : { ...(b.weeklyChallenge ?? {}), ...(a.weeklyChallenge ?? {}) },
   };
+}
+
+function lessonProgressScore(l: LessonRecord | undefined): number {
+  if (!l) return 0;
+  return (l.done ? 2 : 0) + (l.quizTotal ? 1 : 0) + (l.viewed?.length ?? 0) * 0.1;
+}
+
+function mergeLessons(
+  a: Record<string, LessonRecord>,
+  b: Record<string, LessonRecord>
+): Record<string, LessonRecord> {
+  const out: Record<string, LessonRecord> = { ...(a ?? {}) };
+  for (const [day, rb] of Object.entries(b ?? {})) {
+    const ra = out[day];
+    out[day] = lessonProgressScore(rb) >= lessonProgressScore(ra) ? rb : ra;
+  }
+  return out;
 }
 
 export function mergeDocs(local: SyncDoc, remote: SyncDoc): SyncDoc {
@@ -959,6 +1019,7 @@ export function mergeDocs(local: SyncDoc, remote: SyncDoc): SyncDoc {
         marks
       ),
       pronunciation: mergePronunciation(ls.pronunciation ?? {}, rs.pronunciation ?? {}),
+      lessons: mergeLessons(ls.lessons ?? {}, rs.lessons ?? {}),
     },
     meta: { updatedAt, marks, deviceStats },
   };

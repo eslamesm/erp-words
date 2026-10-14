@@ -4,30 +4,36 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { InstallButton } from "./InstallButton";
+import { useProgress } from "@/hooks/useProgress";
 import { useT } from "@/hooks/useT";
 
-const LINKS = [
+interface NavItem {
+  href: string;
+  key: string;
+  icon: string;
+}
+
+// القائمة الرئيسية الجديدة (10 أقسام)
+const LINKS: NavItem[] = [
   { href: "/", key: "nav.home", icon: "🏠" },
-  { href: "/plan", key: "nav.plan", icon: "🗺️" },
-  { href: "/daily", key: "nav.daily", icon: "🎯" },
-  { href: "/dictation", key: "nav.dictation", icon: "🎧" },
-  { href: "/learn", key: "nav.learn", icon: "🎴" },
-  { href: "/pronounce", key: "nav.pronounce", icon: "🗣️" },
-  { href: "/quiz", key: "nav.quiz", icon: "📝" },
+  { href: "/lesson", key: "nav.lesson", icon: "🎓" },
+  { href: "/vocabulary", key: "nav.vocabulary", icon: "📚" },
   { href: "/conversations", key: "nav.conversations", icon: "💬" },
-  { href: "/phrases", key: "nav.phrases", icon: "🧩" },
-  { href: "/glossary", key: "nav.glossary", icon: "🏷️" },
-  { href: "/words", key: "nav.words", icon: "📚" },
-  { href: "/progress", key: "nav.progress", icon: "📈" },
+  { href: "/paths", key: "nav.paths", icon: "🧭" },
+  { href: "/pronounce", key: "nav.pronounce", icon: "🗣️" },
+  { href: "/games", key: "nav.games", icon: "🎮" },
+  { href: "/assistant", key: "nav.assistant", icon: "🤖" },
+  { href: "/achievements", key: "nav.achievements", icon: "🏆" },
   { href: "/settings", key: "nav.settings", icon: "⚙️" },
 ];
 
 // الأيقونات الظاهرة في الشريط السفلي على الموبايل (الباقي داخل قائمة «المزيد»)
-const PRIMARY = new Set(["/", "/plan", "/daily", "/learn", "/words"]);
+const PRIMARY = new Set(["/", "/lesson", "/vocabulary", "/conversations"]);
 
 export function Nav() {
   const pathname = usePathname();
   const { t } = useT();
+  const { profile } = useProgress();
   const [moreOpen, setMoreOpen] = useState(false);
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -47,7 +53,25 @@ export function Nav() {
             >
               {t("common.appName")} <span className="text-emerald-600">📘</span>
             </Link>
-            <InstallButton compact />
+            <div className="flex items-center gap-2">
+              <InstallButton compact />
+              {profile && (
+                <Link href="/settings" aria-label={t("nav.settings")}>
+                  {profile.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.avatar}
+                      alt={profile.name}
+                      className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-500/40"
+                    />
+                  ) : (
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                      {profile.name.charAt(0)}
+                    </span>
+                  )}
+                </Link>
+              )}
+            </div>
           </div>
           <div className="no-scrollbar -mx-1 hidden items-center gap-1 overflow-x-auto pb-2 pt-1.5 text-sm sm:flex">
             {LINKS.map((l) => (

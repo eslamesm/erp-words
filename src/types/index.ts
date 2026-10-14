@@ -70,6 +70,16 @@ export interface DailyResult {
   total: number;
 }
 
+export interface LessonRecord {
+  day: string;
+  wordIds: string[];
+  viewed: string[];
+  quizScore?: number;
+  quizTotal?: number;
+  done: boolean;
+  startedAt: number;
+}
+
 export interface PronunciationProgress {
   id: string;
   best: number;
@@ -88,6 +98,7 @@ export interface Profile {
   motivational?: string;
   age?: number;
   nativeLanguage?: string;
+  avatar?: string;
   planOverrides?: {
     newWordsPerDay?: number;
     reviewsPerDay?: number;

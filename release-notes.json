@@ -1,12 +1,16 @@
 {
   "ar": [
-    "🐞 إصلاح مهم: كان «البحث عن التحديثات» يعرض رسالة «محدّث» دائمًا لأن ملف الإصدار كان يُخزَّن في شبكة التوزيع (CDN) فيقدّم رقمًا قديمًا. الآن يُقرأ الإصدار من مصدر ديناميكي لا يُخزَّن، فتظهر النسخة الجديدة فعليًا.",
-    "🔄 إصلاح زر «تحديث الآن»: يمسح الكاش ويلغي الـ service worker ويعيد التحميل بعنوان جديد لتجاوز أي تخزين وسيط، فيتغيّر رقم الإصدار بعد التحديث.",
-    "🏷️ قسم «مجالات العمل»: 11 حزمة مصطلحات (الأدوار، وحدات ERP، التقارير، العقود، الضرائب، الحوكمة، الأمن، الاختبار، اللوجستيات، الأرقام، ومقابلات العمل)."
+    "🧭 قائمة جديدة منظّمة: درس خصوصي، الكلمات والمصطلحات، المحادثات، المسارات المهنية، النطق، الألعاب، المساعد الذكي، الإنجازات، والإعدادات.",
+    "🎓 «درس خصوصي» يومي: كلمتان جديدتان حسب مستواك مع المعنى والنطق والمثال واستخدام عملي، ثم تدريب قصير — ولا يُحتسب الدرس مكتملًا إلا بإكمال التدريب.",
+    "🏆 صفحة «الإنجازات»: نقاطك ومستواك وسلسلة أيامك والكلمات المتقنة وكل الأوسمة وتفاصيل التقدّم.",
+    "🖼️ صورة شخصية: ارفع صورة من إعداداتك (تُضغط تلقائيًا) وتظهر في ملفك وفي الشريط العلوي.",
+    "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
-    "🐞 Important fix: «Check for updates» always showed «up to date» because version.json was cached at the CDN and returned a stale number. The version is now read from a dynamic, uncached source, so new releases appear correctly.",
-    "🔄 Fixed the «Update now» button: it clears caches, unregisters the service worker, and reloads with a fresh URL to bypass any intermediate caching, so the version number updates after applying.",
-    "🏷️ New «Domains» section: 11 glossary packs (roles, ERP modules, reporting, contracts, tax, governance, security, testing, logistics, numbers, and job interviews)."
+    "🧭 New organized menu: Private Lesson, Vocabulary & Terms, Conversations, Career Paths, Pronunciation, Games, AI Assistant, Achievements, and Settings.",
+    "🎓 Daily «Private Lesson»: two new words based on your level with meaning, pronunciation, an example and a workplace usage, then a short drill — the lesson counts as done only after finishing the drill.",
+    "🏆 New «Achievements» page: your points, level, day streak, mastered words, all badges and progress details.",
+    "🖼️ Profile picture: upload an image from Settings (auto-compressed) and it appears in your profile and the top bar.",
+    "🧪 Test setup (Vitest) for core utilities to keep them stable across updates."
   ]
 }

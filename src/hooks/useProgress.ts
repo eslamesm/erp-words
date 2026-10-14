@@ -10,12 +10,16 @@ import {
   applyFreeze as applyFreezeStore,
   awardBadges,
   bookmarksStore,
+  completeLesson as completeLessonStore,
   conversationsStore,
   dailyStore,
   defaultProfile,
+  ensureLesson as ensureLessonStore,
   exportData,
   getProgressFor,
   importData,
+  lessonsStore,
+  markLessonViewed as markLessonViewedStore,
   notesStore,
   profileStore,
   progressStore,
@@ -49,6 +53,7 @@ export function useProgress() {
   const daily = useStore(dailyStore);
   const conversations = useStore(conversationsStore);
   const pronunciation = useStore(pronunciationStore);
+  const lessons = useStore(lessonsStore);
   const today = useTodayKey();
   const week = useWeekKey();
   const yesterday = today ? shiftDay(today, -1) : "";
@@ -162,6 +167,28 @@ export function useProgress() {
     if (total > 0 && score === total) awardBadges(["quiz-perfect"]);
   }, []);
 
+  const ensureLesson = useCallback((day: string, wordIds: string[]) => {
+    ensureLessonStore(day, wordIds);
+  }, []);
+
+  const markLessonViewed = useCallback((day: string, wordId: string) => {
+    markLessonViewedStore(day, wordId);
+  }, []);
+
+  const completeLesson = useCallback(
+    (day: string, wordIds: string[], score: number, total: number) => {
+      for (const id of wordIds) {
+        const prev = getProgressFor(id);
+        progressStore.set((p) => ({ ...p, [id]: applyRating(prev, "good") }));
+      }
+      recordReview(true);
+      addXp(score * 5 + total * 3);
+      completeLessonStore(day, score, total);
+      if (total > 0 && score === total) awardBadges(["quiz-perfect"]);
+    },
+    []
+  );
+
   const freeze = useCallback((): boolean => applyFreezeStore(), []);
 
   const backup = useCallback(() => exportData(), []);
@@ -212,6 +239,7 @@ export function useProgress() {
     daily,
     conversations,
     pronunciation,
+    lessons,
     today,
     dailyToday: today ? daily[today] ?? null : null,
     weeklyToday: week && profile?.weeklyChallenge ? profile.weeklyChallenge[week] ?? null : null,
@@ -228,6 +256,9 @@ export function useProgress() {
     recordPronunciation,
     setNote,
     toggleConversation,
+    ensureLesson,
+    markLessonViewed,
+    completeLesson,
     freeze,
     backup,
     restore,
