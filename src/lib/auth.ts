@@ -1,0 +1,65 @@
+import { getSupabase } from "@/lib/supabase";
+
+export interface AuthUser {
+  id: string;
+  email: string | null;
+}
+
+const ERROR_AR: Record<string, string> = {
+  "Invalid login credentials": "البريد أو كلمة المرور غير صحيحة.",
+  "Email not confirmed": "لم يتم تأكيد بريدك بعد. تحقق من صندوق الوارد.",
+  "User already registered": "هذا البريد مسجّل بالفعل. جرّب تسجيل الدخول.",
+  "Password should be at least 6 characters": "كلمة المرور يجب أن تكون 6 أحرف على الأقل.",
+  "Signup requires a valid password": "أدخل كلمة مرور صالحة (6 أحرف على الأقل).",
+  "Unable to validate email address: invalid format": "صيغة البريد الإلكتروني غير صحيحة.",
+};
+
+function ar(message?: string): string {
+  if (!message) return "حدث خطأ غير متوقع، حاول مرة أخرى.";
+  return ERROR_AR[message] ?? message;
+}
+
+export interface AuthResult {
+  ok: boolean;
+  error?: string;
+  /** عند التسجيل: صحيح إن كان يلزم تأكيد البريد قبل الدخول */
+  needsConfirm?: boolean;
+}
+
+export async function signUp(email: string, password: string): Promise<AuthResult> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, error: "المزامنة السحابية غير مهيأة." };
+  const { data, error } = await sb.auth.signUp({
+    email: email.trim(),
+    password,
+  });
+  if (error) return { ok: false, error: ar(error.message) };
+  return { ok: true, needsConfirm: !data.session };
+}
+
+export async function signIn(email: string, password: string): Promise<AuthResult> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, error: "المزامنة السحابية غير مهيأة." };
+  const { error } = await sb.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+  if (error) return { ok: false, error: ar(error.message) };
+  return { ok: true };
+}
+
+export async function signOut(): Promise<void> {
+  const sb = getSupabase();
+  if (!sb) return;
+  await sb.auth.signOut();
+}
+
+export async function sendReset(email: string): Promise<AuthResult> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, error: "المزامنة السحابية غير مهيأة." };
+  const redirectTo =
+    typeof window !== "undefined" ? `${window.location.origin}/settings` : undefined;
+  const { error } = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+  if (error) return { ok: false, error: ar(error.message) };
+  return { ok: true };
+}

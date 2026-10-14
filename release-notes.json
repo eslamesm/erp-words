@@ -1,0 +1,12 @@
+{
+  "ar": [
+    "🐞 إصلاح مهم: كان «البحث عن التحديثات» يعرض رسالة «محدّث» دائمًا لأن ملف الإصدار كان يُخزَّن في شبكة التوزيع (CDN) فيقدّم رقمًا قديمًا. الآن يُقرأ الإصدار من مصدر ديناميكي لا يُخزَّن، فتظهر النسخة الجديدة فعليًا.",
+    "🔄 إصلاح زر «تحديث الآن»: يمسح الكاش ويلغي الـ service worker ويعيد التحميل بعنوان جديد لتجاوز أي تخزين وسيط، فيتغيّر رقم الإصدار بعد التحديث.",
+    "🏷️ قسم «مجالات العمل»: 11 حزمة مصطلحات (الأدوار، وحدات ERP، التقارير، العقود، الضرائب، الحوكمة، الأمن، الاختبار، اللوجستيات، الأرقام، ومقابلات العمل)."
+  ],
+  "en": [
+    "🐞 Important fix: «Check for updates» always showed «up to date» because version.json was cached at the CDN and returned a stale number. The version is now read from a dynamic, uncached source, so new releases appear correctly.",
+    "🔄 Fixed the «Update now» button: it clears caches, unregisters the service worker, and reloads with a fresh URL to bypass any intermediate caching, so the version number updates after applying.",
+    "🏷️ New «Domains» section: 11 glossary packs (roles, ERP modules, reporting, contracts, tax, governance, security, testing, logistics, numbers, and job interviews)."
+  ]
+}
