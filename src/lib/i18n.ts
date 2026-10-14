@@ -139,6 +139,7 @@ const ar: Dict = {
   "paths.back": "كل المسارات",
   "paths.practice": "تدرّب على الإجابة",
   "paths.practiceDesc": "اقرأ السؤال، أجب بصوت مسموع، ثم اعرض الإجابة النموذجية وقارن.",
+  "paths.dblHint": "انقر نقرًا مزدوجًا على أي جملة لعرض ترجمتها العربية.",
 
   // قسم تطوير البرمجيات و DevOps
   "it.title": "🧑‍💻 تطوير البرمجيات و DevOps",
@@ -618,6 +619,7 @@ const en: Dict = {
   "paths.back": "All paths",
   "paths.practice": "Practice your answer",
   "paths.practiceDesc": "Read the question, answer aloud, then reveal the model answer and compare.",
+  "paths.dblHint": "Double-click any sentence to reveal its Arabic translation.",
 
   // Software Engineering & DevOps section
   "it.title": "🧑‍💻 Software Engineering & DevOps",

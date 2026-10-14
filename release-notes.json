@@ -1,5 +1,6 @@
 {
   "ar": [
+    "🌐 «المسارات المهنية» بالإنجليزية أولًا، مع إظهار الترجمة العربية لأي جملة عبر النقر المزدوج عليها.",
     "🎮 خمس ألعاب لتثبيت المفردات: تحدي الكلمات، المطابقة، بناء الكلمة، بناء الجملة، وترتيب المحادثة — مع حفظ أفضل نتيجة وعدد المرات وشارة «لاعب».",
     "🔊 قسم أصوات الحروف (Phonics): أصوات الحروف الـ26، والحروف المركّبة، وحروف العلة المزدوجة، والكتل الساكنة، مع كلمات أمثلة مسموعة.",
     "🧑‍💻 قسم «تطوير البرمجيات و DevOps»: أكثر من 60 مصطلحًا تقنيًا في 10 مواضيع (قواعد البيانات، الواجهات، تتبّع الأخطاء، الاختبار، النشر، Git، Linux، الشبكات، CI/CD، المراقبة) قابلة للدراسة والمراجعة ضمن نظام التكرار المتباعد.",
@@ -11,6 +12,7 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "🌐 «Career Paths» now show English first, with the Arabic translation revealed by double-clicking any sentence.",
     "🎮 Five vocabulary games: Word Challenge, Matching, Word Builder, Sentence Builder and Conversation Builder — with best score, play count and a «Player» badge.",
     "🔊 New Phonics section: the 26 letter sounds, digraphs, vowel teams and consonant blends, with playable example words.",
     "🧑‍💻 New «Software Engineering & DevOps» section: 60+ technical terms across 10 topics (databases, APIs, debugging, testing, deployment, Git, Linux, networking, CI/CD, monitoring) studyable and reviewable through spaced repetition.",
