@@ -16,6 +16,7 @@ import {
   defaultProfile,
   ensureLesson as ensureLessonStore,
   exportData,
+  gamesStore,
   getProgressFor,
   importData,
   lessonsStore,
@@ -25,6 +26,7 @@ import {
   progressStore,
   pronunciationStore,
   recordDaily,
+  recordGame as recordGameStore,
   recordPronunciation as recordPronunciationStore,
   recordReview,
   resetAll,
@@ -54,6 +56,7 @@ export function useProgress() {
   const conversations = useStore(conversationsStore);
   const pronunciation = useStore(pronunciationStore);
   const lessons = useStore(lessonsStore);
+  const games = useStore(gamesStore);
   const today = useTodayKey();
   const week = useWeekKey();
   const yesterday = today ? shiftDay(today, -1) : "";
@@ -189,6 +192,13 @@ export function useProgress() {
     []
   );
 
+  const recordGame = useCallback((id: string, score: number, total: number) => {
+    recordGameStore(id, score);
+    addXp(score * 3 + 10);
+    awardBadges(["game-first"]);
+    if (total > 0 && score >= total) awardBadges(["quiz-perfect"]);
+  }, []);
+
   const freeze = useCallback((): boolean => applyFreezeStore(), []);
 
   const backup = useCallback(() => exportData(), []);
@@ -240,6 +250,7 @@ export function useProgress() {
     conversations,
     pronunciation,
     lessons,
+    games,
     today,
     dailyToday: today ? daily[today] ?? null : null,
     weeklyToday: week && profile?.weeklyChallenge ? profile.weeklyChallenge[week] ?? null : null,
@@ -259,6 +270,7 @@ export function useProgress() {
     ensureLesson,
     markLessonViewed,
     completeLesson,
+    recordGame,
     freeze,
     backup,
     restore,

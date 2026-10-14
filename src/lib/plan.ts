@@ -36,6 +36,7 @@ export const BADGES: BadgeDef[] = [
   { id: "dictation-10", icon: "🎧", title: "أذن موسيقية", titleEn: "Musical ear", desc: "جلسة تفقيط بدقة 80% أو أكثر", descEn: "Dictation session at 80%+ accuracy" },
   { id: "speak-clear", icon: "🗣️", title: "نطق واضح", titleEn: "Clear speech", desc: "أتممت تدريب نطق بنجاح", descEn: "Completed a pronunciation drill" },
   { id: "plan-done", icon: "🎖️", title: "مكمل الخطة", titleEn: "Plan finisher", desc: "أتممت خطة التعلم", descEn: "Completed a learning plan" },
+  { id: "game-first", icon: "🎮", title: "لاعب", titleEn: "Player", desc: "أكملت لعبة تعليمية", descEn: "Finished an educational game" },
 ];
 
 export class BadgeRules {

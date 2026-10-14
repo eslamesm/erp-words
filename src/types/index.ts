@@ -70,6 +70,12 @@ export interface DailyResult {
   total: number;
 }
 
+export interface GameRecord {
+  plays: number;
+  best: number;
+  lastAt: number;
+}
+
 export interface LessonRecord {
   day: string;
   wordIds: string[];

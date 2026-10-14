@@ -1,4 +1,4 @@
-import type { AppStats, DailyResult, LessonRecord, Level, Profile, PronunciationProgress, WordProgress } from "@/types";
+import type { AppStats, DailyResult, GameRecord, LessonRecord, Level, Profile, PronunciationProgress, WordProgress } from "@/types";
 import { newProgress } from "@/lib/srs";
 import { dayKey, shiftDay } from "@/lib/dates";
 
@@ -12,6 +12,7 @@ const KEY_DAILY = "erp-vocab:daily";
 const KEY_CONVERSATIONS = "erp-vocab:conversations";
 const KEY_PRONUNCIATION = "erp-vocab:pronunciation";
 const KEY_LESSONS = "erp-vocab:lessons";
+const KEY_GAMES = "erp-vocab:games";
 const KEY_META = "erp-vocab:meta";
 
 export interface Settings {
@@ -61,6 +62,7 @@ export const STORE_NAMES = [
   "conversations",
   "pronunciation",
   "lessons",
+  "games",
 ] as const;
 export type StoreName = (typeof STORE_NAMES)[number];
 
@@ -289,6 +291,7 @@ export const lessonsStore = createStore<Record<string, LessonRecord>>(
   KEY_LESSONS,
   {}
 );
+export const gamesStore = createStore<Record<string, GameRecord>>("games", KEY_GAMES, {});
 
 const ALL_STORES = [
   progressStore,
@@ -301,6 +304,7 @@ const ALL_STORES = [
   conversationsStore,
   pronunciationStore,
   lessonsStore,
+  gamesStore,
 ];
 
 export function setProfile(profile: Profile | null) {
@@ -540,12 +544,27 @@ export function completeLesson(day: string, score: number, total: number) {
   });
 }
 
+// ══ الألعاب والتحديات ══
+export function recordGame(id: string, score: number) {
+  gamesStore.set((all) => {
+    const prev = all[id];
+    return {
+      ...all,
+      [id]: {
+        plays: (prev?.plays ?? 0) + 1,
+        best: Math.max(prev?.best ?? 0, score),
+        lastAt: Date.now(),
+      },
+    };
+  });
+}
+
 export function getLesson(day: string) {
   return day ? lessonsStore.read()[day] ?? null : null;
 }
 
 // ══ نسخ احتياطي: تصدير/استيراد كل البيانات المحلية ══
-const ALL_KEYS = [KEY_PROGRESS, KEY_BOOKMARKS, KEY_STATS, KEY_SETTINGS, KEY_PROFILE, KEY_NOTES, KEY_DAILY, KEY_CONVERSATIONS, KEY_PRONUNCIATION, KEY_LESSONS];
+const ALL_KEYS = [KEY_PROGRESS, KEY_BOOKMARKS, KEY_STATS, KEY_SETTINGS, KEY_PROFILE, KEY_NOTES, KEY_DAILY, KEY_CONVERSATIONS, KEY_PRONUNCIATION, KEY_LESSONS, KEY_GAMES];
 
 export function exportData(): string {
   if (typeof window === "undefined") return "{}";
@@ -603,6 +622,7 @@ const OWNER_STORES = [
   KEY_CONVERSATIONS,
   KEY_PRONUNCIATION,
   KEY_LESSONS,
+  KEY_GAMES,
 ];
 const OWNER_PREFIX = "erp-vocab:owner:";
 
@@ -692,6 +712,7 @@ export interface SyncStores {
   conversations: string[];
   pronunciation: Record<string, PronunciationProgress>;
   lessons: Record<string, LessonRecord>;
+  games: Record<string, GameRecord>;
 }
 
 export interface SyncDoc {
@@ -719,6 +740,7 @@ export function buildSyncDoc(): SyncDoc {
       conversations: conversationsStore.read(),
       pronunciation: pronunciationStore.read(),
       lessons: lessonsStore.read(),
+      games: gamesStore.read(),
     },
     meta: {
       updatedAt: meta.updatedAt ?? {},
@@ -739,6 +761,7 @@ export function applySyncDoc(doc: SyncDoc) {
   conversationsStore.setRaw(doc.stores.conversations ?? []);
   pronunciationStore.setRaw(doc.stores.pronunciation ?? {});
   lessonsStore.setRaw(doc.stores.lessons ?? {});
+  gamesStore.setRaw(doc.stores.games ?? {});
   const meta = readMeta();
   meta.updatedAt = { ...(meta.updatedAt ?? {}), ...(doc.meta?.updatedAt ?? {}) };
   meta.marks = { ...(meta.marks ?? {}), ...(doc.meta?.marks ?? {}) };
@@ -970,6 +993,20 @@ function mergeLessons(
   return out;
 }
 
+function mergeGames(
+  a: Record<string, GameRecord>,
+  b: Record<string, GameRecord>
+): Record<string, GameRecord> {
+  const out: Record<string, GameRecord> = { ...(a ?? {}) };
+  for (const [id, rb] of Object.entries(b ?? {})) {
+    const ra = out[id];
+    out[id] = ra
+      ? { plays: Math.max(ra.plays, rb.plays), best: Math.max(ra.best, rb.best), lastAt: Math.max(ra.lastAt, rb.lastAt) }
+      : rb;
+  }
+  return out;
+}
+
 export function mergeDocs(local: SyncDoc, remote: SyncDoc): SyncDoc {
   const la = local.meta?.updatedAt ?? {};
   const ra = remote.meta?.updatedAt ?? {};
@@ -1020,6 +1057,7 @@ export function mergeDocs(local: SyncDoc, remote: SyncDoc): SyncDoc {
       ),
       pronunciation: mergePronunciation(ls.pronunciation ?? {}, rs.pronunciation ?? {}),
       lessons: mergeLessons(ls.lessons ?? {}, rs.lessons ?? {}),
+      games: mergeGames(ls.games ?? {}, rs.games ?? {}),
     },
     meta: { updatedAt, marks, deviceStats },
   };
