@@ -1,5 +1,7 @@
 {
   "ar": [
+    "🎮 خمس ألعاب لتثبيت المفردات: تحدي الكلمات، المطابقة، بناء الكلمة، بناء الجملة، وترتيب المحادثة — مع حفظ أفضل نتيجة وعدد المرات وشارة «لاعب».",
+    "🔊 قسم أصوات الحروف (Phonics): أصوات الحروف الـ26، والحروف المركّبة، وحروف العلة المزدوجة، والكتل الساكنة، مع كلمات أمثلة مسموعة.",
     "🧑‍💻 قسم «تطوير البرمجيات و DevOps»: أكثر من 60 مصطلحًا تقنيًا في 10 مواضيع (قواعد البيانات، الواجهات، تتبّع الأخطاء، الاختبار، النشر، Git، Linux، الشبكات، CI/CD، المراقبة) قابلة للدراسة والمراجعة ضمن نظام التكرار المتباعد.",
     "🧭 «المسارات المهنية»: 5 مسارات وظيفية (منفّذ أنظمة، استشاري وظيفي، دعم فني، قائد فريق دعم، مدير مشروع ERP) مع نظرة عامة والمهارات والأدوات وأسئلة المقابلات (موارد بشرية/فنية/سلوكية) وسيناريوهات عملية.",
     "🧭 قائمة جديدة منظّمة: درس خصوصي، الكلمات والمصطلحات، المحادثات، المسارات المهنية، النطق، الألعاب، المساعد الذكي، الإنجازات، والإعدادات.",
@@ -9,6 +11,8 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "🎮 Five vocabulary games: Word Challenge, Matching, Word Builder, Sentence Builder and Conversation Builder — with best score, play count and a «Player» badge.",
+    "🔊 New Phonics section: the 26 letter sounds, digraphs, vowel teams and consonant blends, with playable example words.",
     "🧑‍💻 New «Software Engineering & DevOps» section: 60+ technical terms across 10 topics (databases, APIs, debugging, testing, deployment, Git, Linux, networking, CI/CD, monitoring) studyable and reviewable through spaced repetition.",
     "🧭 New «Career Paths»: 5 ERP roles (Implementer, Functional Consultant, Technical Support, Support Team Lead, Project Manager) with overview, skills, tools, interview questions (HR/technical/behavioral) and practical scenarios.",
     "🧭 New organized menu: Private Lesson, Vocabulary & Terms, Conversations, Career Paths, Pronunciation, Games, AI Assistant, Achievements, and Settings.",
