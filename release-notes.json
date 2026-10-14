@@ -1,5 +1,6 @@
 {
   "ar": [
+    "🧑‍💻 قسم «تطوير البرمجيات و DevOps»: أكثر من 60 مصطلحًا تقنيًا في 10 مواضيع (قواعد البيانات، الواجهات، تتبّع الأخطاء، الاختبار، النشر، Git، Linux، الشبكات، CI/CD، المراقبة) قابلة للدراسة والمراجعة ضمن نظام التكرار المتباعد.",
     "🧭 «المسارات المهنية»: 5 مسارات وظيفية (منفّذ أنظمة، استشاري وظيفي، دعم فني، قائد فريق دعم، مدير مشروع ERP) مع نظرة عامة والمهارات والأدوات وأسئلة المقابلات (موارد بشرية/فنية/سلوكية) وسيناريوهات عملية.",
     "🧭 قائمة جديدة منظّمة: درس خصوصي، الكلمات والمصطلحات، المحادثات، المسارات المهنية، النطق، الألعاب، المساعد الذكي، الإنجازات، والإعدادات.",
     "🎓 «درس خصوصي» يومي: كلمتان جديدتان حسب مستواك مع المعنى والنطق والمثال واستخدام عملي، ثم تدريب قصير — ولا يُحتسب الدرس مكتملًا إلا بإكمال التدريب.",
@@ -8,6 +9,7 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "🧑‍💻 New «Software Engineering & DevOps» section: 60+ technical terms across 10 topics (databases, APIs, debugging, testing, deployment, Git, Linux, networking, CI/CD, monitoring) studyable and reviewable through spaced repetition.",
     "🧭 New «Career Paths»: 5 ERP roles (Implementer, Functional Consultant, Technical Support, Support Team Lead, Project Manager) with overview, skills, tools, interview questions (HR/technical/behavioral) and practical scenarios.",
     "🧭 New organized menu: Private Lesson, Vocabulary & Terms, Conversations, Career Paths, Pronunciation, Games, AI Assistant, Achievements, and Settings.",
     "🎓 Daily «Private Lesson»: two new words based on your level with meaning, pronunciation, an example and a workplace usage, then a short drill — the lesson counts as done only after finishing the drill.",
