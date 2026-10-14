@@ -1,5 +1,8 @@
 {
   "ar": [
+    "🗣️ المساعد الذكي يدعم الصوت: انطق أي رد إنجليزي بضغطة، وأدخل سؤالك بالصوت عبر الميكروفون.",
+    "🧠 المساعد المحلي صار أذكى: يصحّح أخطاءك الشائعة فعليًا (informations، I am agree، dont…)، ويكتب لك قوالب بريد مهنية جاهزة، ويقترح أسئلة مقابلات مع إجابات نموذجية، ويعطيك كلمة عشوائية للتدريب، وشرائح متابعة بضغطة.",
+    "🔁 تقييم مباشر من المحادثة: بعد شرح أي كلمة يمكنك تقييمها (أعد/صعب/جيد/سهل) لتُجدوَل في المراجعة المتباعدة SRS.",
     "🤖 المساعد الذكي يعمل الآن فعليًا: واجهة محادثة لتعلّم الإنجليزية المهنية في ERP تناقش المفردات، وتشرح الكلمات، وتصوّب كتابتك، وتساعدك في البريد والتقارير، وتدربك على المقابلات، وتربطك بدرس اليوم والكلمات الضعيفة.",
     "🔌 وضع الذكاء الاصطناعي (BYOK): فعّل مساعدًا حقيقيًا من الإعدادات عبر أي مزوّد متوافق مع OpenAI، والمفتاح يُخزَّن على جهازك فقط ولا يُزامَن سحابيًا — وعند تعذّر الاتصال يرجع تلقائيًا للمحرّك المحلي.",
     "🕋 رسالة إسلامية تحفيزية عند فتح التطبيق: أحاديث وأقوال مأثورة في الجد والعمل وطلب العلم، بالفصحى مع الترجمة الإنجليزية، وتبقى حتى الضغط على «متابعة». يمكن إظهارها أو إخفاؤها من الإعدادات.",
@@ -15,6 +18,9 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "🗣️ The assistant now speaks: play any English reply with one tap, and dictate your question by voice with the microphone.",
+    "🧠 The local engine got smarter: it actually corrects your common mistakes (informations, I am agree, dont…), drafts ready professional email templates, suggests interview questions with sample answers, gives a random practice word, and offers one-tap follow-up chips.",
+    "🔁 Rate straight from the chat: after any word is explained you can rate it (Again/Hard/Good/Easy) to reschedule it in spaced repetition (SRS).",
     "🤖 The AI Assistant is now live: a chat interface to learn professional ERP English — discuss vocabulary, explain words, correct your writing, help with emails and reports, practice interviews, and connect to today's lesson and your weak words.",
     "🔌 AI mode (BYOK): enable a real assistant from Settings using any OpenAI-compatible provider; the key stays on your device only and is never synced to the cloud — and it falls back to the local engine automatically if the connection fails.",
     "🕋 A motivational Islamic message on app open: hadiths and reported sayings about diligence, work and seeking knowledge, in classical Arabic with an English translation, staying until you tap «Continue». You can show or hide it from Settings.",

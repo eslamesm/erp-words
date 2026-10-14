@@ -4,14 +4,22 @@ import { WORDS } from "@/data/words";
 import { devWords } from "@/data/devWords";
 import { careerPathsExtra } from "@/data/careerPathsExtra";
 import { CAREER_PATHS } from "@/data/careerPaths";
-import { COLLOCATIONS } from "@/data/phrases";
-import { getLesson } from "@/lib/storage";
-import { getProgressFor } from "@/lib/storage";
+import { COLLOCATIONS, EMAIL_TEMPLATES } from "@/data/phrases";
+import { getLesson, getProgressFor } from "@/lib/storage";
+import { correctEnglish } from "@/lib/englishFix";
+import type { AssistantChip, AssistantReply } from "@/lib/assistant";
+import type { Word } from "@/types";
 
-const ALL_WORDS = [...WORDS, ...devWords];
+const ALL_WORDS: Word[] = [...WORDS, ...devWords];
 const CAREER = [...CAREER_PATHS, ...careerPathsExtra];
 
-function findWord(q: string): (typeof ALL_WORDS)[number] | undefined {
+const DEFAULT_CHIPS: AssistantChip[] = ["dailyLesson", "weak", "random", "interview", "writeEmail", "correct"];
+
+function withChips(reply: AssistantReply, chips: AssistantChip[] = DEFAULT_CHIPS): AssistantReply {
+  return { ...reply, chips };
+}
+
+function findWord(q: string): Word | undefined {
   const needle = q.toLowerCase().trim();
   return (
     ALL_WORDS.find((w) => w.english.toLowerCase() === needle) ||
@@ -50,100 +58,232 @@ function getWeakWords(limit = 6): string[] {
   return out;
 }
 
-export interface LearnerSnapshot {
-  weak: string[];
-  lesson: string[];
+function todayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function learnerSnapshot(): LearnerSnapshot {
+function wordToText(w: Word, isArabic: boolean): string {
+  const ar = `كلمة: ${w.english} — ${w.arabic}\nالتعريف: ${w.definitionAr || w.arabic}\nالنوع: ${w.partOfSpeech || "—"}\nالمستوى: ${w.level}\nالوحدة: ${w.module}\nأمثلة:\n- ${w.examplesAr?.[0] || w.examples[0]}\n- ${w.examplesAr?.[1] || w.examples[1] || w.examples[0]}`;
+  const en = `Word: ${w.english}\nArabic: ${w.arabic}\nDefinition: ${w.definitionEn || w.english}\nPOS: ${w.partOfSpeech || "—"}\nLevel: ${w.level}\nModule: ${w.module}\nExamples:\n- ${w.examples[0]}\n${w.examples[1] ? "- " + w.examples[1] : ""}`;
+  return isArabic ? ar : `${en}\n\n${ar}`;
+}
+
+function randomWord(): Word {
+  const idx = Math.floor(Math.random() * ALL_WORDS.length);
+  return ALL_WORDS[idx];
+}
+
+function emailFor(q: string) {
+  const n = q.toLowerCase();
+  const map: { id: string; keys: string[] }[] = [
+    { id: "approval", keys: ["approval", "approve", "موافقة", "اعتماد"] },
+    { id: "escalation", keys: ["escalat", "overdue", "متأخر", "تصعيد"] },
+    { id: "follow-up", keys: ["follow", "متابعة", "تذكير"] },
+    { id: "meeting", keys: ["meeting", "invite", "اجتماع", "دعوة"] },
+    { id: "request-info", keys: ["request", "info", "details", "طلب", "معلومات"] },
+  ];
+  const hit = map.find((m) => m.keys.some((k) => n.includes(k)));
+  return hit ? EMAIL_TEMPLATES.find((e) => e.id === hit.id) : undefined;
+}
+
+function stripKeyword(q: string, words: string[]): string {
+  let out = q;
+  for (const w of words) out = out.replace(new RegExp(w, "gi"), "");
+  return out.replace(/\s{2,}/g, " ").trim();
+}
+
+export function learnerSnapshot() {
   const weak = getWeakWords(8)
     .map((id) => ALL_WORDS.find((w) => w.id === id)?.english)
     .filter(Boolean) as string[];
-  const d = new Date();
-  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const lesson = (getLesson(key)?.wordIds ?? [])
+  const lesson = (getLesson(todayKey())?.wordIds ?? [])
     .map((id) => ALL_WORDS.find((w) => w.id === id)?.english)
     .filter(Boolean) as string[];
   return { weak, lesson };
 }
 
-export function assistantReply(user: string): string {
+export function assistantRespond(user: string): AssistantReply {
   const q = user.trim();
-  if (!q) return "";
+  if (!q) return { text: "" };
 
   const lower = q.toLowerCase();
   const isArabic = /[\u0600-\u06FF]/.test(q);
 
-  // Explain word
-  if (lower.startsWith("explain") || lower.startsWith("what is") || lower.startsWith("define") || lower.includes("meaning of")) {
-    const term = q.replace(/explain|what is|define|meaning of/gi, "").trim();
-    const w = findWord(term);
-    if (w) {
-      const ar = `كلمة: ${w.english} — ${w.arabic}\nالتعريف: ${w.definitionAr || w.arabic}\nالنوع: ${w.partOfSpeech || "—"}\nالمستوى: ${w.level}\nالوحدة: ${w.module}\nأمثلة:\n- ${w.examplesAr?.[0] || w.examples[0]}\n- ${w.examplesAr?.[1] || w.examples[1] || w.examples[0]}`;
-      const en = `Word: ${w.english}\nArabic: ${w.arabic}\nDefinition: ${w.definitionEn || w.english}\nPOS: ${w.partOfSpeech || "—"}\nLevel: ${w.level}\nModule: ${w.module}\nExamples:\n- ${w.examples[0]}\n${w.examples[1] ? "- " + w.examples[1] : ""}`;
-      return isArabic ? ar : `${en}\n\n${ar}`;
+  // تصحيح الأخطاء (فحص قواعدي مبني على قواعد شائعة)
+  if (
+    lower.includes("correct") ||
+    lower.includes("fix ") ||
+    lower.includes("check my") ||
+    lower.includes("صوّب") ||
+    lower.includes("صحح") ||
+    lower.includes("تصحيح")
+  ) {
+    const text = stripKeyword(q, ["correct", "fix", "check my", "صوّب", "صحح", "تصحيح"]);
+    if (!text) {
+      return withChips({
+        text: isArabic ? "أرسل الجملة أو الجواب لأصحّحه لك." : "Send your sentence/answer and I'll correct it.",
+      });
     }
-    return isArabic ? "لم أجد هذه الكلمة في المفردات. جرّب كلمة أخرى." : "I couldn't find this word in the vocabulary. Try another term.";
+    const { corrected, fixes } = correctEnglish(text);
+    if (!fixes.length) {
+      return withChips({
+        text: isArabic
+          ? `جملتك سليمة ✔\n«${corrected}»\nإن أردت، اطلب صياغة أكثر مهنية: «أعد صياغة: ${corrected}»`
+          : `Your sentence looks correct ✔\n"${corrected}"\nWant a more professional version? Ask: "Rewrite: ${corrected}"`,
+      });
+    }
+    const listAr = fixes.map((f, i) => `${i + 1}. «${f.from}» ← «${f.to}» : ${f.note}`).join("\n");
+    const listEn = fixes.map((f, i) => `${i + 1}. "${f.from}" → "${f.to}": ${f.note}`).join("\n");
+    return withChips({
+      text: isArabic
+        ? `جملتك: «${text}»\nالصواب: «${corrected}»\n\nملاحظات:\n${listAr}`
+        : `Your: "${text}"\nCorrected: "${corrected}"\n\nNotes:\n${listEn}`,
+    });
   }
 
-  // Daily lesson
+  // شرح كلمة
+  if (
+    lower.startsWith("explain") ||
+    lower.startsWith("what is") ||
+    lower.startsWith("define") ||
+    lower.includes("meaning of") ||
+    lower.startsWith("اشرح") ||
+    lower.includes("معنى")
+  ) {
+    const term = stripKeyword(q, ["explain", "what is", "define", "meaning of", "اشرح", "ما معنى", "معنى"]);
+    const w = findWord(term);
+    if (w) return withChips({ text: wordToText(w, isArabic), wordIds: [w.id] });
+    return withChips({
+      text: isArabic
+        ? "لم أجد هذه الكلمة في المفردات. جرّب كلمة ERP أخرى، أو اكتبها بالإنجليزية."
+        : "I couldn't find this word in the vocabulary. Try another ERP term, or type it in English.",
+    });
+  }
+
+  // كلمة عشوائية للتدريب
+  if (lower.includes("random") || lower.includes("عشوائ")) {
+    const w = randomWord();
+    return withChips({
+      text:
+        (isArabic ? "كلمة عشوائية للتدريب:\n\n" : "Random practice word:\n\n") + wordToText(w, isArabic),
+      wordIds: [w.id],
+      chips: ["weak", "dailyLesson", "interview", "correct"],
+    });
+  }
+
+  // كتابة مهنية (بريد/تقرير/تذكرة)
+  if (
+    lower.includes("email") ||
+    lower.includes("write") ||
+    lower.includes("report") ||
+    lower.includes("ticket") ||
+    lower.includes("message") ||
+    lower.includes("بريد") ||
+    lower.includes("اكتب") ||
+    lower.includes("تقرير") ||
+    lower.includes("تذكرة")
+  ) {
+    const topic = stripKeyword(q, ["email", "write", "report", "ticket", "message", "بريد", "اكتب", "تقرير", "تذكرة", "professional", "مهني"]);
+    const tpl = emailFor(q);
+    if (tpl) {
+      const body = isArabic ? tpl.bodyAr : tpl.bodyEn;
+      const subject = isArabic ? tpl.subjectAr : tpl.subjectEn;
+      const tips = (isArabic ? tpl.tipsAr : tpl.tipsEn).map((x) => `• ${x}`).join("\n");
+      return withChips({
+        text:
+          (isArabic ? `قالب بريد جاهز (${tpl.titleAr}):\n\n` : `Ready email template (${tpl.titleEn}):\n\n`) +
+          `Subject: ${subject}\n\n${body}\n\n` +
+          (isArabic ? `نصائح:\n${tips}\n` : `Tips:\n${tips}\n`) +
+          (isArabic ? `\nاستبدل ما بين [الأقواس] بتفاصيلك.` : `\nReplace the [bracketed] parts with your details.`),
+      });
+    }
+    const subj = topic || "ERP request";
+    return withChips({
+      text: isArabic
+        ? `مساعد الكتابة المهنية — الموضوع: ${subj}\nاذكر النوع بدقة ليصلك قالب جاهز، مثل: «اكتب بريد موافقة»، «بريد متابعة»، «بريد تصعيد»، «دعوة اجتماع»، أو «طلب معلومات».`
+        : `Professional writing assistant — Topic: ${subj}\nName the type to get a ready template, e.g. "Write an approval email", "Follow-up email", "Escalation email", "Meeting invite", or "Request for information".`,
+      chips: ["writeEmail", "correct"],
+    });
+  }
+
+  // تدريب مقابلة عمل
+  if (lower.includes("interview") || lower.includes("مقابل")) {
+    const path =
+      CAREER.find((p) => lower.includes(p.title.toLowerCase())) ||
+      CAREER.find((p) => q.includes(p.titleAr)) ||
+      CAREER[Math.floor(Math.random() * CAREER.length)];
+    const iq = path.interview[Math.floor(Math.random() * path.interview.length)];
+    return withChips({
+      text: isArabic
+        ? `تدريب مقابلة — مسار ${path.titleAr} (${path.title})\n\nسؤال (${iq.type}):\n${iq.q}\n${iq.qAr}\n\nإجابة نموذجية:\n${iq.a}\n${iq.aAr}\n\nجاوبني بالإنجليزية وسأصوّب لك.`
+        : `Interview practice — ${path.title} path\n\nQuestion (${iq.type}):\n${iq.q}\n${iq.qAr}\n\nSample answer:\n${iq.a}\n${iq.aAr}\n\nAnswer in English and I'll correct you.`,
+      chips: ["interview", "correct", "writeEmail"],
+    });
+  }
+
+  // درس اليوم
   if (lower.includes("daily") || lower.includes("lesson") || lower.includes("اليوم") || lower.includes("درس")) {
-    const d = new Date();
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const key = todayKey();
     const lesson = getLesson(key);
     if (lesson && lesson.wordIds.length) {
-      const words = lesson.wordIds.map((id) => ALL_WORDS.find((w) => w.id === id)).filter(Boolean) as typeof ALL_WORDS;
-      const ar = `درس اليوم (${key})\nكلمتان:\n1. ${words[0]?.english} — ${words[0]?.arabic}\n2. ${words[1]?.english} — ${words[1]?.arabic}\nاسأل: «استخدم ${words[0]?.english} في جملة» أو «اشرح ${words[0]?.english}».`;
-      const en = `Today's lesson (${key})\n1. ${words[0]?.english} (${words[0]?.arabic})\n2. ${words[1]?.english} (${words[1]?.arabic})\nAsk me: "Use ${words[0]?.english} in a sentence" or "Explain ${words[0]?.english}".`;
-      return isArabic ? ar : `${en}\n\n${ar}`;
+      const words = lesson.wordIds.map((id) => ALL_WORDS.find((w) => w.id === id)).filter(Boolean) as Word[];
+      const ar = `درس اليوم (${key})\nكلمتان:\n1. ${words[0]?.english} — ${words[0]?.arabic}\n2. ${words[1]?.english} — ${words[1]?.arabic}\nاسأل: «اشرح ${words[0]?.english}» أو «استخدم ${words[0]?.english} في جملة».`;
+      const en = `Today's lesson (${key})\n1. ${words[0]?.english} (${words[0]?.arabic})\n2. ${words[1]?.english} (${words[1]?.arabic})\nAsk me: "Explain ${words[0]?.english}".`;
+      return withChips({
+        text: isArabic ? ar : `${en}\n\n${ar}`,
+        wordIds: lesson.wordIds,
+      });
     }
-    return isArabic ? "لم أجد درس اليوم بعد. عدّ لاحقًا." : "Today's lesson not found yet.";
+    return withChips({
+      text: isArabic ? "لم أجد درس اليوم بعد. افتح «درس خصوصي» أولًا." : "Today's lesson isn't ready. Open the Private Lesson first.",
+      chips: ["weak", "random"],
+    });
   }
 
-  // Revision / weak
+  // مراجعة الكلمات الضعيفة
   if (lower.includes("review") || lower.includes("revision") || lower.includes("weak") || lower.includes("ضعيف") || lower.includes("مراجعة")) {
     const ids = getWeakWords();
-    const words = ids.map((id) => ALL_WORDS.find((w) => w.id === id)).filter(Boolean);
-    const listAr = words.map((w, i) => `${i + 1}. ${w!.english} — ${w!.arabic}`).join("\n");
-    const listEn = words.map((w, i) => `${i + 1}. ${w!.english} (${w!.arabic})`).join("\n");
-    return isArabic
-      ? `كلمات تحتاج مراجعة (ضعيفة):\n${listAr}\nأطلب: «استخدم [الكلمة] في جملة» أو «صوّب جملتي...»`
-      : `Words to review (weak areas):\n${listEn}\nAsk: "Use [word] in a sentence" or "Correct my sentence...".`;
+    const words = ids.map((id) => ALL_WORDS.find((w) => w.id === id)).filter(Boolean) as Word[];
+    const listAr = words.map((w, i) => `${i + 1}. ${w.english} — ${w.arabic}`).join("\n");
+    const listEn = words.map((w, i) => `${i + 1}. ${w.english} (${w.arabic})`).join("\n");
+    return withChips({
+      text: isArabic
+        ? `كلمات تحتاج مراجعة (ضعيفة):\n${listAr}\nراجعها لاحقًا عبر نظام التكرار المتباعد.`
+        : `Words to review (weak areas):\n${listEn}\nRate them below to reschedule via spaced repetition.`,
+      wordIds: ids,
+      chips: ["random", "dailyLesson"],
+    });
   }
 
-  // Career paths
+  // المسارات المهنية
   if (lower.includes("career") || lower.includes("path") || lower.includes("job") || lower.includes("مسار") || lower.includes("وظيفة")) {
     const items = CAREER.slice(0, 5).map((p) => `${p.icon} ${p.title} (${p.titleAr})`).join("\n");
-    return isArabic
-      ? `مسارات مهنية في ERP:\n${items}\nاسأل: «مقابلة لمسار ${CAREER[0]?.titleAr}»`
-      : `ERP career paths:\n${items}\nAsk: "Interview for ${CAREER[0]?.title}"`;
+    return withChips({
+      text: isArabic
+        ? `مسارات مهنية في ERP:\n${items}\nاسأل: «تدريب مقابلة ${CAREER[0]?.titleAr}»`
+        : `ERP career paths:\n${items}\nAsk: "Interview practice ${CAREER[0]?.title}"`,
+      chips: ["interview", "correct"],
+    });
   }
 
-  // Correction
-  if (lower.includes("correct") || lower.includes("fix") || lower.includes("صوّب") || lower.includes("صحح")) {
-    const text = q.replace(/correct|fix|صوّب|صحح/gi, "").trim();
-    if (!text) return isArabic ? "أرسل الجملة أو الجواب للتصحيح." : "Send your sentence/answer to correct.";
-    return isArabic
-      ? `تصحيح مقترح للجملة:\n«${text}»\nاقتراح مهني أنسب:\n«${text}» (اقتراح مبسط — يمكنني تطويره أكثر عند إضافة نموذج AI).`
-      : `Suggested correction:\nYour: "${text}"\nImproved (professional): "${text}".\nNote: For deeper grammar/ERP-specific corrections, enable AI mode in settings (BYOK).`;
-  }
-
-  // Writing
-  if (lower.includes("email") || lower.includes("ticket") || lower.includes("report") || lower.includes("message") || lower.includes("بريد") || lower.includes("تذكرة") || lower.includes("تقرير")) {
-    const topic = q.replace(/email|ticket|report|message|بريد|تذكرة|تقرير/gi, "").trim() || "ERP request";
-    return isArabic
-      ? `مساعد كتابة مهني — الموضوع: ${topic}\nأكتب: «اكتب بريدًا إنجليزيًا عن ${topic} بأسلوب رسمي ومهني».`
-      : `Professional writing assistant — Topic: ${topic}\nAsk: "Write a professional English email about ${topic}".`;
-  }
-
-  // Phrase lookup
+  // قاموس العبارات/المتلازمات اللفظية
   const ph = findPhrase(q);
   if (ph) {
-    return isArabic ? `${ph.en}\n${ph.ar}` : `${ph.en}\n${ph.ar}`;
+    return withChips({ text: `${ph.en}\n${ph.ar}` });
   }
 
-  // Default
-  const hintAr = "يمكنني الشرح، المراجعة الذكية، التدرب على المقابلات، تصحيح الأخطاء والمساعدة في الكتابة المهنية.";
-  const hintEn = "I can explain words, do smart revision, practice interviews, correct mistakes, and help with professional writing.";
-  return isArabic ? `${hintAr}\n\nجرّب: «اشرح invoice»، «درس اليوم»، «مراجعة الكلمات الضعيفة»` : `${hintEn}\n\nTry: "Explain invoice", "Today's lesson", "Review weak words"`;
+  // رد افتراضي
+  const hintAr = "يمكنني: شرح الكلمات، تدريب المقابلات، تصحيح أخطائك، الكتابة المهنية (بريد/تقرير)، المراجعة الذكية، وكلمة عشوائية.";
+  const hintEn = "I can: explain words, practice interviews, correct your mistakes, professional writing (email/report), smart revision, and a random word.";
+  return withChips({
+    text: isArabic
+      ? `${hintAr}\n\nجرّب: «اشرح invoice»، «صوّب: I have informations»، «اكتب بريد موافقة»، «تدريب مقابلة».`
+      : `${hintEn}\n\nTry: "Explain invoice", "Correct: I have informations", "Write an approval email", "Interview practice".`,
+  });
+}
+
+/** واجهة نصية مختصرة للاستخدام كرد احتياطي عند فشل الذكاء الاصطناعي. */
+export function assistantReply(user: string): string {
+  return assistantRespond(user).text;
 }
