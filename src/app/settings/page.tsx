@@ -7,6 +7,7 @@ import { WORDS } from "@/data/words";
 import { PLAN_META } from "@/lib/plan";
 import { InstallButton } from "@/components/InstallButton";
 import { AuthPanel } from "@/components/AuthPanel";
+import { AssistantSettings } from "@/components/AssistantSettings";
 import { SyncStatus } from "@/components/SyncStatus";
 import { UpdateCenter } from "@/components/UpdateCenter";
 import { signOut } from "@/lib/auth";
@@ -246,6 +247,8 @@ export default function SettingsPage() {
           </div>
         )}
       </section>
+
+      <AssistantSettings />
 
       <section className="rounded-2xl border border-amber-200 bg-white p-5 shadow-sm dark:border-amber-900 dark:bg-slate-900">
         <h2 className="font-bold">{t("set.scheduleTitle")}</h2>

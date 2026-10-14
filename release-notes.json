@@ -1,5 +1,7 @@
 {
   "ar": [
+    "🤖 المساعد الذكي يعمل الآن فعليًا: واجهة محادثة لتعلّم الإنجليزية المهنية في ERP تناقش المفردات، وتشرح الكلمات، وتصوّب كتابتك، وتساعدك في البريد والتقارير، وتدربك على المقابلات، وتربطك بدرس اليوم والكلمات الضعيفة.",
+    "🔌 وضع الذكاء الاصطناعي (BYOK): فعّل مساعدًا حقيقيًا من الإعدادات عبر أي مزوّد متوافق مع OpenAI، والمفتاح يُخزَّن على جهازك فقط ولا يُزامَن سحابيًا — وعند تعذّر الاتصال يرجع تلقائيًا للمحرّك المحلي.",
     "🕋 رسالة إسلامية تحفيزية عند فتح التطبيق: أحاديث وأقوال مأثورة في الجد والعمل وطلب العلم، بالفصحى مع الترجمة الإنجليزية، وتبقى حتى الضغط على «متابعة». يمكن إظهارها أو إخفاؤها من الإعدادات.",
     "🌐 «المسارات المهنية» بالإنجليزية أولًا، مع إظهار الترجمة العربية لأي جملة عبر النقر المزدوج عليها.",
     "🎮 خمس ألعاب لتثبيت المفردات: تحدي الكلمات، المطابقة، بناء الكلمة، بناء الجملة، وترتيب المحادثة — مع حفظ أفضل نتيجة وعدد المرات وشارة «لاعب».",
@@ -13,6 +15,8 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "🤖 The AI Assistant is now live: a chat interface to learn professional ERP English — discuss vocabulary, explain words, correct your writing, help with emails and reports, practice interviews, and connect to today's lesson and your weak words.",
+    "🔌 AI mode (BYOK): enable a real assistant from Settings using any OpenAI-compatible provider; the key stays on your device only and is never synced to the cloud — and it falls back to the local engine automatically if the connection fails.",
     "🕋 A motivational Islamic message on app open: hadiths and reported sayings about diligence, work and seeking knowledge, in classical Arabic with an English translation, staying until you tap «Continue». You can show or hide it from Settings.",
     "🌐 «Career Paths» now show English first, with the Arabic translation revealed by double-clicking any sentence.",
     "🎮 Five vocabulary games: Word Challenge, Matching, Word Builder, Sentence Builder and Conversation Builder — with best score, play count and a «Player» badge.",

@@ -24,7 +24,7 @@ function findWord(q: string): (typeof ALL_WORDS)[number] | undefined {
 
 function findPhrase(q: string) {
   const n = q.toLowerCase();
-  return COLLOCATIONS.find((p: any) => p.en.toLowerCase().includes(n) || p.ar.includes(q));
+  return COLLOCATIONS.find((p) => p.en.toLowerCase().includes(n) || p.ar.includes(q));
 }
 
 function getWeakWords(limit = 6): string[] {
@@ -48,6 +48,23 @@ function getWeakWords(limit = 6): string[] {
     }
   }
   return out;
+}
+
+export interface LearnerSnapshot {
+  weak: string[];
+  lesson: string[];
+}
+
+export function learnerSnapshot(): LearnerSnapshot {
+  const weak = getWeakWords(8)
+    .map((id) => ALL_WORDS.find((w) => w.id === id)?.english)
+    .filter(Boolean) as string[];
+  const d = new Date();
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const lesson = (getLesson(key)?.wordIds ?? [])
+    .map((id) => ALL_WORDS.find((w) => w.id === id)?.english)
+    .filter(Boolean) as string[];
+  return { weak, lesson };
 }
 
 export function assistantReply(user: string): string {
