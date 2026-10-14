@@ -224,7 +224,6 @@ const ar: Dict = {
   "reading.listen": "استمع",
 
   // رسالة الاستقبال
-  "welcome.proverb": "من جدّ وجد ومن زرع حصد",
   "welcome.subtitle": "طريقك لإتقان مفردات ERP يبدأ الآن",
   "welcome.tap": "اضغط للمتابعة",
 
@@ -703,7 +702,6 @@ const en: Dict = {
   "reading.glossary": "Article glossary",
   "reading.listen": "Listen",
 
-  "welcome.proverb": "Who strives finds, and who plants harvests",
   "welcome.subtitle": "Your path to mastering ERP vocabulary starts now",
   "welcome.tap": "Tap to continue",
 
