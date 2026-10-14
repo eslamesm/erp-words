@@ -25,6 +25,7 @@ export interface Settings {
   scheduleTime?: string;
   scheduleDuration?: number;
   theme?: "system" | "light" | "dark";
+  welcomeSplash?: boolean;
   planDone?: Record<string, boolean>;
 }
 
@@ -270,6 +271,7 @@ const DEFAULT_SETTINGS: Settings = {
   scheduleTime: "18:00",
   scheduleDuration: 15,
   theme: "system",
+  welcomeSplash: true,
   planDone: {},
 };
 

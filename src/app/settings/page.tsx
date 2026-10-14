@@ -325,6 +325,18 @@ export default function SettingsPage() {
             className="h-5 w-5 accent-emerald-600"
           />
         </label>
+        <label className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-medium">{t("set.welcomeSplash")}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{t("set.welcomeSplashDesc")}</div>
+          </div>
+          <input
+            type="checkbox"
+            checked={settings?.welcomeSplash ?? true}
+            onChange={(e) => updateSettings({ ...settings, welcomeSplash: e.target.checked })}
+            className="h-5 w-5 accent-emerald-600"
+          />
+        </label>
         <div>
           <div className="font-medium">{t("set.speechRate")}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">{t("set.speechRateDesc")}</div>

@@ -1,31 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { ISLAMIC_MESSAGES, pickIslamicMessage, type IslamicMessage } from "@/data/islamicMessages";
+import { useEffect, useState } from "react";
+import { ISLAMIC_MESSAGES, type IslamicMessage } from "@/data/islamicMessages";
+import { useProgress } from "@/hooks/useProgress";
 import { useT } from "@/hooks/useT";
+
+function nextMessage(): IslamicMessage {
+  const key = "erp-vocab:islam-splash";
+  let index = Math.floor(Math.random() * ISLAMIC_MESSAGES.length);
+  try {
+    const last = window.sessionStorage.getItem(key);
+    if (last !== null) {
+      const n = parseInt(last, 10);
+      if (!Number.isNaN(n)) index = (n + 1) % ISLAMIC_MESSAGES.length;
+    }
+    window.sessionStorage.setItem(key, String(index));
+  } catch {
+    // تجاهل
+  }
+  return ISLAMIC_MESSAGES[index];
+}
 
 export function WelcomeSplash() {
   const { t } = useT();
+  const { settings } = useProgress();
   const [visible, setVisible] = useState(true);
   const [fading, setFading] = useState(false);
-  const [message] = useState<IslamicMessage>(() => {
-    if (typeof window !== "undefined") {
-      const key = "erp-vocab:islamsplash";
-      const last = window.sessionStorage.getItem(key);
-      let idx = 0;
-      if (last !== null) {
-        const n = parseInt(last, 10);
-        idx = Number.isNaN(n) ? 0 : (n + 1) % ISLAMIC_MESSAGES.length;
-      } else {
-        idx = Math.floor(Math.random() * ISLAMIC_MESSAGES.length);
-      }
-      window.sessionStorage.setItem(key, String(idx));
-      return ISLAMIC_MESSAGES[idx];
-    }
-    return pickIslamicMessage(123456789);
-  });
+  const [message, setMessage] = useState<IslamicMessage | null>(null);
 
-  if (!visible) return null;
+  useEffect(() => {
+    const pick = setTimeout(() => setMessage(nextMessage()), 0);
+    return () => clearTimeout(pick);
+  }, []);
+
+  if (!visible || !(settings?.welcomeSplash ?? true)) return null;
 
   return (
     <button
