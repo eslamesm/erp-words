@@ -1,4 +1,5 @@
 import type { Word } from "@/types";
+import { devWords } from "./devWords";
 
 // كل مقطع يمثل وحدة (module) من وحدات الـ ERP مع مفرداتها
 export const WORDS: Word[] = [
@@ -3886,6 +3887,7 @@ export const WORDS: Word[] = [
     synonyms: ["parts stock"],
     tags: ["service", "inventory"],
   },
+  ...devWords,
 ];
 
 export const wordsByModule = (moduleId: string) => WORDS.filter((w) => w.module === moduleId);

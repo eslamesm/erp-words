@@ -140,6 +140,12 @@ const ar: Dict = {
   "paths.practice": "تدرّب على الإجابة",
   "paths.practiceDesc": "اقرأ السؤال، أجب بصوت مسموع، ثم اعرض الإجابة النموذجية وقارن.",
 
+  // قسم تطوير البرمجيات و DevOps
+  "it.title": "🧑‍💻 تطوير البرمجيات و DevOps",
+  "it.subtitle": "مفردات ومصطلحات تقنية للمطوّرين: قواعد البيانات، الواجهات، تتبّع الأخطاء، الاختبار، النشر، Git، Linux، الشبكات، CI/CD، والمراقبة.",
+  "it.study": "ادرس الموضوع",
+  "it.studyAll": "ادرس كل المصطلحات ({n})",
+
   "phrases.title": "🧩 حزم العمليات والمصطلحات",
   "phrases.subtitle": "حزم دورات العمل (P2P/O2C/R2R/الإقفال) والاختصارات والتعابير المركّبة مع النطق.",
   "phrases.tabPacks": "حزم العمليات",
@@ -561,6 +567,12 @@ const en: Dict = {
   "paths.back": "All paths",
   "paths.practice": "Practice your answer",
   "paths.practiceDesc": "Read the question, answer aloud, then reveal the model answer and compare.",
+
+  // Software Engineering & DevOps section
+  "it.title": "🧑‍💻 Software Engineering & DevOps",
+  "it.subtitle": "Technical vocabulary for developers: databases, APIs, debugging, testing, deployment, Git, Linux, networking, CI/CD and monitoring.",
+  "it.study": "Study topic",
+  "it.studyAll": "Study all terms ({n})",
 
   "phrases.title": "🧩 Process packs & terms",
   "phrases.subtitle": "Business cycles (P2P/O2C/R2R/Close), abbreviations, and compound phrases with audio.",

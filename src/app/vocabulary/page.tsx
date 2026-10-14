@@ -16,6 +16,7 @@ export default function VocabularyHub() {
         <SectionCard href="/glossary" icon="🏷️" title={t("nav.glossary")} desc={t("hub.vocabulary.glossaryDesc")} />
         <SectionCard href="/phrases" icon="🧩" title={t("nav.phrases")} desc={t("hub.vocabulary.phrasesDesc")} />
         <SectionCard href="/reading" icon="📄" title={t("nav.reading")} desc={t("hub.vocabulary.readingDesc")} />
+        <SectionCard href="/it" icon="🧑‍💻" title={t("it.title")} desc={t("it.subtitle")} />
       </div>
     </div>
   );
