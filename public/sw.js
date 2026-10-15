@@ -1,9 +1,10 @@
 /* Service Worker: تحديث ذاتي + شبكة أولًا مع تخزين احتياطي للعمل دون اتصال */
-const VERSION = "mv9qsr7i";
+const VERSION = "mv10-brand";
 const CACHE = `erp-vocab-${VERSION}`;
 const CORE = [
   "/",
   "/manifest.webmanifest",
+  "/icons/icon.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
