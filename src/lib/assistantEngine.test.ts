@@ -53,4 +53,28 @@ describe("assistantRespond", () => {
   it("assistantReply returns the plain text", () => {
     expect(assistantReply("Explain invoice")).toBe(assistantRespond("Explain invoice").text);
   });
+
+  it("asks for the user's role on a client-conversation request (Arabic)", () => {
+    const r = assistantRespond("طريقة اجراء محادثة مع عميل");
+    expect(r.options && r.options.length).toBeGreaterThan(0);
+    expect(r.options!.some((o) => o.value === "role:accountant")).toBe(true);
+    expect(r.text).toContain("دورك");
+  });
+
+  it("asks for the role in English too", () => {
+    const r = assistantRespond("conversation with a client");
+    expect(r.text.toLowerCase()).toContain("role");
+    expect(r.options!.some((o) => o.value === "role:sales")).toBe(true);
+  });
+
+  it("tailors a client conversation to a role detected in the message", () => {
+    const r = assistantRespond("محادثة مع عميل شكاوى");
+    expect(r.text.length).toBeGreaterThan(0);
+    expect(r.options && r.options.length).toBeGreaterThan(0);
+  });
+
+  it("confirms a role selection", () => {
+    const r = assistantRespond("role:accountant");
+    expect(r.text.toLowerCase()).toContain("accountant");
+  });
 });

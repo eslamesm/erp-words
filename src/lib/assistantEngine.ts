@@ -7,6 +7,8 @@ import { CAREER_PATHS } from "@/data/careerPaths";
 import { COLLOCATIONS, EMAIL_TEMPLATES } from "@/data/phrases";
 import { getLesson, getProgressFor } from "@/lib/storage";
 import { correctEnglish } from "@/lib/englishFix";
+import { CONVERSATIONS, CONVERSATION_EN } from "@/data/conversations";
+import { ROLES, getRole, setRole, clearRole, roleLabel, savePending, takePending, detectRole, type RoleId } from "./assistantRole";
 import type { AssistantChip, AssistantReply } from "@/lib/assistant";
 import type { Word } from "@/types";
 
@@ -17,6 +19,89 @@ const DEFAULT_CHIPS: AssistantChip[] = ["dailyLesson", "weak", "random", "interv
 
 function withChips(reply: AssistantReply, chips: AssistantChip[] = DEFAULT_CHIPS): AssistantReply {
   return { ...reply, chips };
+}
+
+function roleOptions() {
+  return ROLES.map((r) => ({ label: `${r.ar} — ${r.en}`, value: `role:${r.id}` }));
+}
+
+function askRoleText(isArabic: boolean): string {
+  return isArabic
+    ? "لتخصّص الرد لوظيفتك، ما دورك في العمل؟ اختر من الخيارات أو اكتبه (مثلاً: «أنا محاسب»)."
+    : "So I can tailor the answer to your job, what is your role? Pick below or type it (e.g. \"I'm an accountant\").";
+}
+
+function clientConversationIntent(q: string): boolean {
+  const s = q.toLowerCase();
+  if (/(conversation with|talk to|speak to|speak with|deal with|handle).*?(client|customer)/.test(s)) return true;
+  if (/(client|customer).*?(conversation|meeting|call|complaint)/.test(s)) return true;
+  if (/(محادثة|حوار|محاور|حديث|التعامل|التحدث|مخاطبة)\s*(مع|إلى)?.{0,10}(العميل|عميل|الزبون|زبون|العميلا)/.test(q)) return true;
+  if (/(العميل|عميل|الزبون|زبون).{0,12}(محادثة|حوار|تعامل|شكوى|اجتماع|مكالمة)/.test(q)) return true;
+  if (/(كيف|طريقة|طريقه).{0,15}(أتعامل|اتعامل|أخاطب|اخاطب|أحادث|احادث|محادثة|حوار)/.test(q)) return true;
+  return false;
+}
+
+function pickConversationId(role: RoleId | null, q: string): string | null {
+  const s = q.toLowerCase();
+  if (/complaint|شكا|شكوى/.test(s)) return "complaint";
+  if (/delivery|تسليم|شحن/.test(s)) return "delivery";
+  if (/change|تعديل|طلب تغيير/.test(s)) return "change-request";
+  if (/trouble|problem|issue|مشكلة|عطل/.test(s)) return "troubleshooting";
+  if (/sales|مبيعات|بيع/.test(s)) return "sales";
+  if (/procurement|شراء|مورد|مشتريات/.test(s)) return "procurement";
+  if (/budget|ميزانية|ميزاني/.test(s)) return "budget";
+  if (/inventory|مخزن|مخزون|جرد/.test(s)) return "inventory";
+  if (/hr|موارد بشرية|رواتب/.test(s)) return "hr";
+  if (/roadmap|خارطة/.test(s)) return "roadmap";
+  const prefs: Record<RoleId, string[]> = {
+    accountant: ["budget", "management", "procurement"],
+    purchasing: ["procurement", "delivery"],
+    sales: ["sales", "close", "kickoff"],
+    inventory: ["inventory"],
+    hr: ["hr"],
+    it: ["troubleshooting", "change-request"],
+    pm: ["kickoff", "roadmap", "delivery", "change-request"],
+    support: ["complaint", "troubleshooting", "delivery"],
+    general: ["sales", "kickoff"],
+  };
+  return (prefs[role ?? "general"] ?? prefs.general)[0] ?? null;
+}
+
+function clientConversationReply(role: RoleId | null, q: string, isArabic: boolean): AssistantReply {
+  const id = pickConversationId(role, q);
+  const conv = CONVERSATIONS.find((c) => c.id === id);
+  if (!conv) {
+    return withChips({
+      text: isArabic
+        ? "لدي سيناريوهات محادثات عملية مع العملاء. اختر نوعًا: شكاوى، مبيعات، تسليم."
+        : "I have practical client-conversation scenarios. Pick a type: complaint, sales, delivery.",
+      options: [
+        { label: isArabic ? "شكاوى" : "Complaint", value: "محادثة مع عميل شكاوى" },
+        { label: isArabic ? "مبيعات" : "Sales", value: "محادثة مبيعات" },
+        { label: isArabic ? "تسليم" : "Delivery", value: "محادثة تسليم" },
+        { label: isArabic ? "تغيير الوظيفة" : "Change role", value: "role:clear" },
+      ],
+    });
+  }
+  const en = CONVERSATION_EN[id as keyof typeof CONVERSATION_EN];
+  const title = en?.title ?? conv.title;
+  const topic = en?.topic ?? conv.topic;
+  const lines = conv.lines
+    .slice(0, 4)
+    .map((l) => `${l.role === "A" ? (isArabic ? "الشخص الأول" : "A") : isArabic ? "الشخص الثاني" : "B"}: ${isArabic ? l.ar : l.en}`)
+    .join("\n");
+  const roleL = roleLabel(role, isArabic ? "ar" : "en");
+  const meta = isArabic ? `${conv.level} · ${conv.minutes} دقيقة` : `${conv.level} · ${conv.minutes} min`;
+  const tail = roleL ? (isArabic ? ` · موجّه نحو: ${roleL}` : ` · Tailored to: ${roleL}`) : "";
+  return withChips({
+    text: `**${title}** — ${topic}\n\n${lines}\n\n(${meta}${tail})`,
+    options: [
+      { label: isArabic ? "شكاوى (complaint)" : "Complaint", value: "محادثة مع عميل شكاوى" },
+      { label: isArabic ? "مبيعات (sales)" : "Sales", value: "محادثة مبيعات" },
+      { label: isArabic ? "تسليم (delivery)" : "Delivery", value: "محادثة تسليم" },
+      { label: isArabic ? "تغيير الوظيفة" : "Change role", value: "role:clear" },
+    ],
+  });
 }
 
 function findWord(q: string): Word | undefined {
@@ -147,6 +232,48 @@ export function assistantRespond(user: string): AssistantReply {
   // تحيات ومجاملات قصيرة
   const greet = smalltalkReply(q, lower, isArabic);
   if (greet) return withChips({ text: greet });
+
+  // اختيار/تحديد وظيفة السائل (لجعل الردود مناسبة لدوره)
+  if (lower.startsWith("role:")) {
+    const id = lower.slice(5).trim();
+    if (id === "clear") {
+      clearRole();
+      return { text: askRoleText(isArabic), options: roleOptions() };
+    }
+    if (ROLES.some((r) => r.id === id)) {
+      setRole(id as RoleId);
+      const pending = takePending();
+      if (pending) return assistantRespond(pending);
+      return withChips({
+        text: isArabic
+          ? `ممتاز! سأخصّص ردودي لمجال «${roleLabel(id as RoleId, "ar")}». اسألني عن محادثة مع عميل، بريد مهني، أو كلمة ERP.`
+          : `Great! I'll tailor answers to "${roleLabel(id as RoleId, "en")}". Ask me about a client conversation, a professional email, or an ERP word.`,
+      });
+    }
+  }
+
+  const coreIntent = /correct|fix |check my|صوّب|صحح|تصحيح|explain|what is|define|meaning of|اشرح|معنى|random|عشوائ|email|write|report|ticket|message|بريد|اكتب|تقرير|تذكرة|interview|مقابل|lesson|درس|review|weak|ضعيف|مراجعة|career|path|job|مسار|وظيفة/.test(lower);
+  const detectedRole = coreIntent ? null : detectRole(q);
+  if (detectedRole) setRole(detectedRole);
+  const role: RoleId | null = detectedRole ?? getRole();
+
+  // محادثة عملية مع عميل (تُخصّص حسب الوظيفة)
+  if (clientConversationIntent(q)) {
+    if (!role) {
+      savePending(q);
+      return { text: askRoleText(isArabic), options: roleOptions() };
+    }
+    return clientConversationReply(role, q, isArabic);
+  }
+
+  if (detectedRole) {
+    return withChips({
+      text: isArabic
+        ? `تم! سأخصّص ردودي لمجال «${roleLabel(detectedRole, "ar")}». اسألني: «محادثة مع عميل»، «اكتب بريد متابعة»، أو «اشرح invoice».`
+        : `Done! I'll tailor answers to "${roleLabel(detectedRole, "en")}". Ask: "conversation with a client", "write a follow-up email", or "explain invoice".`,
+      options: [{ label: isArabic ? "تغيير الوظيفة" : "Change role", value: "role:clear" }],
+    });
+  }
 
   // تصحيح الأخطاء (فحص قواعدي مبني على قواعد شائعة)
   if (

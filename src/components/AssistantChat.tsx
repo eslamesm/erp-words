@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useT } from "@/hooks/useT";
 import { useProgress } from "@/hooks/useProgress";
-import type { AssistantChip, AssistantMessage } from "@/lib/assistant";
+import type { AssistantChip, AssistantMessage, AssistantOption } from "@/lib/assistant";
 import { newAssistantState } from "@/lib/assistant";
 import { assistantRespond, learnerSnapshot } from "@/lib/assistantEngine";
 import { aiChat, isAiConfigured, readAiConfig, type AiChatMessage } from "@/lib/ai";
+import { getRole, roleLabel } from "@/lib/assistantRole";
 import { speak } from "@/lib/speech";
 import { useTodayKey } from "@/lib/today";
 import type { Rating } from "@/types";
@@ -27,7 +28,7 @@ type RecognizerCtor = new () => Recognizer;
 function newMessage(
   role: "user" | "assistant",
   content: string,
-  extra?: { wordIds?: string[]; chips?: AssistantChip[] }
+  extra?: { wordIds?: string[]; chips?: AssistantChip[]; options?: AssistantOption[] }
 ): AssistantMessage {
   return {
     id: `${role[0]}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -69,6 +70,12 @@ function buildSystemPrompt(lang: string, level: string, native: string) {
     "- Mirror the learner's language: reply mainly in the language they used, with English terms kept as-is.",
   ];
   lines.push(`Learner level: ${level}. Native language: ${native}.`);
+  const role = getRole();
+  if (role) {
+    lines.push(
+      `The learner's job role is "${roleLabel(role, "en")}" (${roleLabel(role, "ar")}). Tailor examples, vocabulary and advice to this role and its ERP module.`
+    );
+  }
   if (snap.lesson.length) lines.push(`Today's lesson words: ${snap.lesson.join(", ")}.`);
   if (snap.weak.length) lines.push(`Weak words to reinforce: ${snap.weak.join(", ")}.`);
   if (lang === "ar") lines.push("The learner prefers Arabic explanations, with English ERP terms.");
@@ -143,11 +150,11 @@ export function AssistantChat({ variant = "page" }: { variant?: "page" | "widget
     setListening(true);
   }
 
-  async function send(raw?: string) {
+  async function send(raw?: string, display?: string) {
     const msg = (raw ?? input).trim();
     if (!msg) return;
     setInput("");
-    push(newMessage("user", msg));
+    push(newMessage("user", display ?? msg));
     setBusy(true);
 
     const cfg = readAiConfig();
@@ -166,7 +173,8 @@ export function AssistantChat({ variant = "page" }: { variant?: "page" | "widget
         setBusy(false);
         return;
       } catch {
-        push(newMessage("assistant", `${t("assist.aiError")}\n\n${assistantRespond(msg).text}`));
+        const r = assistantRespond(msg);
+        push(newMessage("assistant", `${t("assist.aiError")}\n\n${r.text}`, { wordIds: r.wordIds, chips: r.chips, options: r.options }));
         setBusy(false);
         return;
       }
@@ -174,7 +182,7 @@ export function AssistantChat({ variant = "page" }: { variant?: "page" | "widget
 
     setTimeout(() => {
       const r = assistantRespond(msg);
-      push(newMessage("assistant", r.text, { wordIds: r.wordIds, chips: r.chips }));
+      push(newMessage("assistant", r.text, { wordIds: r.wordIds, chips: r.chips, options: r.options }));
       setBusy(false);
     }, 150);
   }
@@ -187,6 +195,10 @@ export function AssistantChat({ variant = "page" }: { variant?: "page" | "widget
       return;
     }
     void send(prompt);
+  }
+
+  function onOption(opt: AssistantOption) {
+    void send(opt.value, opt.label);
   }
 
   function rateWord(messageId: string, wordIds: string[], rating: Rating) {
@@ -304,6 +316,19 @@ export function AssistantChat({ variant = "page" }: { variant?: "page" | "widget
                       ))}
                     </span>
                   )
+                )}
+                {m.options && m.options.length > 0 && !busy && (
+                  <div className="flex flex-wrap gap-2">
+                    {m.options.map((o, i) => (
+                      <button
+                        key={`${m.id}-opt-${i}`}
+                        onClick={() => onOption(o)}
+                        className="rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

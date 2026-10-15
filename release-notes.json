@@ -1,5 +1,7 @@
 {
   "ar": [
+    "🧑🏽💼 المساعد صار واعيًا بوظيفتك: يسألك عن دورك (محاسب، مشتريات، مبيعات، موارد بشرية، دعم فني…) بأزرار سريعة، ثم يخصّص الردود لتناسب مجالك.",
+    "💬 محادثات عملية مع العملاء: اسأل «طريقة إجراء محادثة مع عميل» وسيعطيك حوارًا واقعيًا من بيانات التطبيق (شكاوى، مبيعات، تسليم…) مناسبًا لوظيفتك.",
     "💬 أيقونة مساعد عائمة: زر متحرك أسفل الشاشة (مناسب للهاتف) يفتح المحادثة مباشرة من أي صفحة، مع لوحة عرض كامل على الجوال وغير ذلك على الحاسوب.",
     "👋 المساعد يرد على التحيات تلقائيًا بلغتك: «مرحبا»، «السلام عليكم» (وعليكم السلام ورحمة الله وبركاته)، «كيف حالك»، «صباح الخير»، «شكرًا»، «hello» وغيرها.",
     "⚡ اختيار سريع لمزوّد الذكاء الاصطناعي في الإعدادات: أزرار لـ OpenAI وGroq وOpenRouter وOllama (محلي) تعبّئ العنوان والموديل بضغطة، مع رابط مباشر للحصول على مفتاح API.",
@@ -21,6 +23,8 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "🧑🏽💼 The assistant is now role-aware: it asks about your job (accountant, purchasing, sales, HR, IT support…) with quick buttons, then tailors its answers to your field.",
+    "🗨️ Practical client conversations: ask \"how to have a conversation with a client\" and it shows a real dialogue from the app's data (complaint, sales, delivery…), matched to your role.",
     "💬 Floating assistant icon: an animated button at the bottom of the screen (mobile-friendly) that opens the chat from any page — full-screen on phones, a floating panel on desktop.",
     "👋 The assistant now answers greetings automatically in your language: \"hello\", \"hi\", \"how are you\", \"good morning\", \"thanks\", and Arabic greetings too.",
     "⚡ Quick AI provider picker in Settings: one-tap presets for OpenAI, Groq, OpenRouter and Ollama (local) that fill the base URL and model, with a direct link to get an API key.",
