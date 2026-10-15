@@ -1,5 +1,7 @@
 {
   "ar": [
+    "💬 أيقونة مساعد عائمة: زر متحرك أسفل الشاشة (مناسب للهاتف) يفتح المحادثة مباشرة من أي صفحة، مع لوحة عرض كامل على الجوال وغير ذلك على الحاسوب.",
+    "👋 المساعد يرد على التحيات تلقائيًا بلغتك: «مرحبا»، «السلام عليكم» (وعليكم السلام ورحمة الله وبركاته)، «كيف حالك»، «صباح الخير»، «شكرًا»، «hello» وغيرها.",
     "⚡ اختيار سريع لمزوّد الذكاء الاصطناعي في الإعدادات: أزرار لـ OpenAI وGroq وOpenRouter وOllama (محلي) تعبّئ العنوان والموديل بضغطة، مع رابط مباشر للحصول على مفتاح API.",
     "🗣️ المساعد الذكي يدعم الصوت: انطق أي رد إنجليزي بضغطة، وأدخل سؤالك بالصوت عبر الميكروفون.",
     "🧠 المساعد المحلي صار أذكى: يصحّح أخطاءك الشائعة فعليًا (informations، I am agree، dont…)، ويكتب لك قوالب بريد مهنية جاهزة، ويقترح أسئلة مقابلات مع إجابات نموذجية، ويعطيك كلمة عشوائية للتدريب، وشرائح متابعة بضغطة.",
@@ -19,6 +21,8 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "💬 Floating assistant icon: an animated button at the bottom of the screen (mobile-friendly) that opens the chat from any page — full-screen on phones, a floating panel on desktop.",
+    "👋 The assistant now answers greetings automatically in your language: \"hello\", \"hi\", \"how are you\", \"good morning\", \"thanks\", and Arabic greetings too.",
     "⚡ Quick AI provider picker in Settings: one-tap presets for OpenAI, Groq, OpenRouter and Ollama (local) that fill the base URL and model, with a direct link to get an API key.",
     "🗣️ The assistant now speaks: play any English reply with one tap, and dictate your question by voice with the microphone.",
     "🧠 The local engine got smarter: it actually corrects your common mistakes (informations, I am agree, dont…), drafts ready professional email templates, suggests interview questions with sample answers, gives a random practice word, and offers one-tap follow-up chips.",

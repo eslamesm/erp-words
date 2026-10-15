@@ -38,6 +38,18 @@ describe("assistantRespond", () => {
     expect(r.chips && r.chips.length).toBeGreaterThan(0);
   });
 
+  it("greets back in Arabic", () => {
+    expect(assistantRespond("مرحبا").text).toContain("مرحبًا");
+  });
+
+  it("responds to the Islamic greeting", () => {
+    expect(assistantRespond("السلام عليكم").text).toContain("وعليكم السلام");
+  });
+
+  it("greets back in English", () => {
+    expect(assistantRespond("hello").text.toLowerCase()).toContain("hello");
+  });
+
   it("assistantReply returns the plain text", () => {
     expect(assistantReply("Explain invoice")).toBe(assistantRespond("Explain invoice").text);
   });

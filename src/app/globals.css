@@ -49,3 +49,22 @@ body {
   background: rgb(148 163 184 / 0.5);
   border-radius: 9999px;
 }
+
+/* أيقونة المساعد العائمة: حركة طفو لطيفة */
+@keyframes assistantFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.assistant-fab {
+  animation: assistantFloat 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .assistant-fab { animation: none; }
+}
+@keyframes assistantPop {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.assistant-pop {
+  animation: assistantPop 0.2s ease-out;
+}

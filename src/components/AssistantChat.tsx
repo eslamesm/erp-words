@@ -84,7 +84,7 @@ const CHIP_PROMPT: Record<AssistantChip, { en: string; ar: string }> = {
   correct: { en: "Correct my sentence: ", ar: "صوّب جملتي: " },
 };
 
-export function AssistantChat() {
+export function AssistantChat({ variant = "page" }: { variant?: "page" | "widget" }) {
   const { t, lang } = useT();
   const { profile, settings, rate } = useProgress();
   const today = useTodayKey();
@@ -202,30 +202,48 @@ export function AssistantChat() {
   const lastChips = state.messages.filter((m) => m.role === "assistant").slice(-1)[0]?.chips;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            {t("nav.assistant")}
-            {aiReady && (
-              <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                {t("assist.aiBadge")}
-              </span>
-            )}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t("assist.tagline")}</p>
+    <div className={variant === "widget" ? "flex h-full min-h-0 flex-col gap-3" : "flex flex-col gap-4"}>
+      {variant === "page" ? (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="flex items-center gap-2 text-2xl font-bold">
+              {t("nav.assistant")}
+              {aiReady && (
+                <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                  {t("assist.aiBadge")}
+                </span>
+              )}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("assist.tagline")}</p>
+          </div>
+          <button
+            onClick={newTopic}
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {t("assist.newTopic")}
+          </button>
         </div>
-        <button
-          onClick={newTopic}
-          className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          {t("assist.newTopic")}
-        </button>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          {aiReady && (
+            <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white">
+              {t("assist.aiBadge")}
+            </span>
+          )}
+          <button
+            onClick={newTopic}
+            className="ms-auto rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {t("assist.newTopic")}
+          </button>
+        </div>
+      )}
 
       <div
         ref={listRef}
-        className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        className={`flex flex-col gap-3 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 ${
+          variant === "widget" ? "flex-1 min-h-0" : "max-h-[60vh]"
+        }`}
       >
         {state.messages.length === 0 && (
           <div className="py-8 text-center text-slate-500 dark:text-slate-400">

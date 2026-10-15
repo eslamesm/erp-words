@@ -93,6 +93,40 @@ function stripKeyword(q: string, words: string[]): string {
   return out.replace(/\s{2,}/g, " ").trim();
 }
 
+// ردود التحيات والمجاملات القصيرة — تتفاعل تلقائيًا بلغة المستخدم.
+function smalltalkReply(q: string, lower: string, isArabic: boolean): string | null {
+  if (/explain|translate|correct|email|interview|lesson|درس|اشرح|ترجم|صوّب|صحح|بريد|مقابل/i.test(q)) {
+    return null;
+  }
+  const t = q.trim();
+  if (/السلام\s*عليكم|السلام\s*علیکم|السَّلام|assalam|salam\s*alaikum|assalamu/i.test(q)) {
+    return "وعليكم السلام ورحمة الله وبركاته 🌟\nكيف يمكنني مساعدتك في الإنجليزية المهنية اليوم؟";
+  }
+  if (/\b(bye|goodbye|see you|see ya)\b/i.test(lower) || /وداعا|وداعًا|إلى اللقاء|مع السلامة/.test(q)) {
+    return isArabic ? "إلى اللقاء! أتمنى لك يومًا موفقًا ☺️" : "Goodbye! Have a great day ☺️";
+  }
+  if (/\b(thanks|thank you|thx|thank u)\b/i.test(lower) || /شكرا|شكرًا|مشكور|مشكورة/.test(q)) {
+    return isArabic ? "العفو! أنا هنا متى احتجت 👍" : "You're welcome! I'm here whenever you need me 👍";
+  }
+  if (/كيف\s*حالك|كيف\s*الحال|كيفك|شلونك|أخبارك|اخبارك|كيف\s*الأمور/.test(q) || /\bhow are you\b/i.test(lower)) {
+    return isArabic
+      ? "بخير والحمد لله، شكرًا لسؤالك! 😊 كيف يمكنني مساعدتك؟"
+      : "I'm doing well, thanks for asking! 😊 How can I help you?";
+  }
+  if (/صباح\s*الخير|صباح\s*النور|صباحو/.test(q) || /\bgood morning\b/i.test(lower)) {
+    return isArabic ? "صباح النور! 🌅 كيف يمكنني مساعدتك اليوم؟" : "Good morning! 🌅 How can I help you today?";
+  }
+  if (/مساء\s*الخير|مساء\s*النور/.test(q) || /\bgood evening\b/i.test(lower)) {
+    return isArabic ? "مساء النور! 🌆 كيف يمكنني مساعدتك اليوم؟" : "Good evening! 🌆 How can I help you today?";
+  }
+  if (/^(مرحبا|مرحبًا|أهلا|أهلًا|هلا|اهلا|هاي|هالو|أهلاً وسهلاً)/.test(t) || /^(hi|hello|hey|hallo|hola)\b/i.test(t)) {
+    return isArabic
+      ? "مرحبًا! 👋 كيف يمكنني مساعدتك في الإنجليزية المهنية؟"
+      : "Hello! 👋 How can I help you with professional English?";
+  }
+  return null;
+}
+
 export function learnerSnapshot() {
   const weak = getWeakWords(8)
     .map((id) => ALL_WORDS.find((w) => w.id === id)?.english)
@@ -109,6 +143,10 @@ export function assistantRespond(user: string): AssistantReply {
 
   const lower = q.toLowerCase();
   const isArabic = /[\u0600-\u06FF]/.test(q);
+
+  // تحيات ومجاملات قصيرة
+  const greet = smalltalkReply(q, lower, isArabic);
+  if (greet) return withChips({ text: greet });
 
   // تصحيح الأخطاء (فحص قواعدي مبني على قواعد شائعة)
   if (

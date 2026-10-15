@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { VoicePreference } from "@/components/VoicePreference";
 import { WelcomeSplash } from "@/components/WelcomeSplash";
+import { AssistantWidget } from "@/components/AssistantWidget";
 
 export const metadata: Metadata = {
   title: "ERP Words — تعلم مفردات إنجليزية لنظم ERP",
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </footer>
         <ServiceWorkerRegister />
         <WelcomeSplash />
+        <AssistantWidget />
       </body>
     </html>
   );
