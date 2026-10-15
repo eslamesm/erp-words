@@ -1,5 +1,11 @@
 {
   "ar": [
+    "🔌 اتصال ذكاء اصطناعي موحّد: «اختبار الاتصال» صار يستخدم نفس مسار الدردشة الحقيقي، مع تصحيح تلقائي لاسم الموديل لدى OpenRouter (مثل openai/gpt-4o-mini)، ومهلة 30 ثانية، وعرض الرد تدريجيًا (streaming).",
+    "⚠️ أخطاء واضحة بدل الرد الوهمي: عند فشل الاتصال يظهر سبب مفصّل (مفتاح مرفوض، لا رصيد، تجاوز الحد، موديل غير موجود، شبكة/CORS، انتهاء المهلة) مع زرّي «أعد المحاولة» و«استخدم البحث المحلي».",
+    "🌐 الرد بلغة رسالتك: يجيب المساعد بالعربية أو الإنجليزية حسب آخر رسالة كتبتها أنت — لا حسب لغة واجهة التطبيق.",
+    "📚 وضع «بدون اتصال» معنون بوضوح: بحث فوري في بيانات التطبيق (كلمات، مسارات مهنية، مقابلات، سيناريوهات، محادثات، حزم العمليات)، ويُرسَل للذكاء الاصطناعي السياق المسترجَع فقط حفاظًا على الخصوصية.",
+    "🎯 توجيه أدق للمسارات: تدريب المقابلات يستخدم المسار المهني الذي تختاره (مثل «منفّذ أنظمة ERP/Odoo») بدل اختيار مسار عشوائي.",
+    "🎙️ إدخال صوتي بلغة تختارها (عربي/إنجليزي) مع حالات واضحة (استماع/تحويل/تفكير/تحدّث)، ورسالة عند رفض إذن الميكروفون، وإيقاف النطق عند الكتابة.",
     "🧑🏽💼 المساعد صار واعيًا بوظيفتك: يسألك عن دورك (محاسب، مشتريات، مبيعات، موارد بشرية، دعم فني…) بأزرار سريعة، ثم يخصّص الردود لتناسب مجالك.",
     "💬 محادثات عملية مع العملاء: اسأل «طريقة إجراء محادثة مع عميل» وسيعطيك حوارًا واقعيًا من بيانات التطبيق (شكاوى، مبيعات، تسليم…) مناسبًا لوظيفتك.",
     "💬 أيقونة مساعد عائمة: زر متحرك أسفل الشاشة (مناسب للهاتف) يفتح المحادثة مباشرة من أي صفحة، مع لوحة عرض كامل على الجوال وغير ذلك على الحاسوب.",
@@ -23,6 +29,12 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "🔌 Unified AI connection: \"Test connection\" now uses the exact same chat path as real conversations, auto-fixes the model name for OpenRouter (e.g. openai/gpt-4o-mini), applies a 30s timeout, and streams the reply progressively.",
+    "⚠️ Clear errors instead of a fake reply: on failure you see the real reason (rejected key, no credit, rate limit, model not found, network/CORS, timeout) with \"Retry\" and \"Use local search\" buttons.",
+    "🌐 Replies in your message's language: the assistant answers in Arabic or English based on your last message, not the app UI language.",
+    "📚 Explicit \"offline mode\": instant search across app data (words, career paths, interviews, scenarios, conversations, process packs); only the retrieved context is sent to the AI, for privacy.",
+    "🎯 Sharper routing: interview practice uses the career path you pick (e.g. ERP/Odoo Implementer) instead of a random path.",
+    "🎙️ Voice input in a language you choose (Arabic/English) with clear states (listening/transcribing/thinking/speaking), a message when the mic is denied, and speech stops while you type.",
     "🧑🏽💼 The assistant is now role-aware: it asks about your job (accountant, purchasing, sales, HR, IT support…) with quick buttons, then tailors its answers to your field.",
     "🗨️ Practical client conversations: ask \"how to have a conversation with a client\" and it shows a real dialogue from the app's data (complaint, sales, delivery…), matched to your role.",
     "💬 Floating assistant icon: an animated button at the bottom of the screen (mobile-friendly) that opens the chat from any page — full-screen on phones, a floating panel on desktop.",

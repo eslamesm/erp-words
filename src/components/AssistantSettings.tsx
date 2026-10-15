@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useT } from "@/hooks/useT";
-import { aiChat, AiError, DEFAULT_AI, readAiConfig, writeAiConfig, type AiConfig } from "@/lib/ai";
+import {
+  AiError,
+  DEFAULT_AI,
+  aiErrorMessageKey,
+  readAiConfig,
+  testConnection,
+  writeAiConfig,
+  type AiConfig,
+  type AiErrorCode,
+} from "@/lib/ai";
 
 interface AiPreset {
   id: string;
@@ -48,7 +57,9 @@ export function AssistantSettings() {
   const { t, lang } = useT();
   const [cfg, setCfg] = useState<AiConfig>(DEFAULT_AI);
   const [saved, setSaved] = useState(false);
-  const [test, setTest] = useState<null | "testing" | "ok" | string>(null);
+  const [test, setTest] = useState<
+    null | "testing" | "ok" | { code: AiErrorCode; detail?: string }
+  >(null);
 
   useEffect(() => {
     const id = setTimeout(() => setCfg(readAiConfig()), 0);
@@ -56,8 +67,8 @@ export function AssistantSettings() {
   }, []);
 
   function save(next: AiConfig) {
-    setCfg(next);
-    writeAiConfig(next);
+    const saved = writeAiConfig(next);
+    setCfg(saved);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   }
@@ -69,13 +80,11 @@ export function AssistantSettings() {
   async function runTest() {
     setTest("testing");
     try {
-      const reply = await aiChat(
-        [{ role: "user", content: "Reply with the single word: OK" }],
-        cfg
-      );
-      setTest(reply ? "ok" : "empty");
+      await testConnection(cfg);
+      setTest("ok");
     } catch (e) {
-      setTest(e instanceof AiError ? e.message : "error");
+      if (e instanceof AiError) setTest({ code: e.code, detail: e.detail });
+      else setTest({ code: "unknown" });
     }
   }
 
@@ -193,7 +202,8 @@ export function AssistantSettings() {
         {test === "ok" && <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{t("set.aiTestOk")}</span>}
         {test && test !== "ok" && test !== "testing" && (
           <span className="text-sm font-semibold text-rose-600 dark:text-rose-400">
-            {t("set.aiTestFail", { msg: test })}
+            {t("set.aiTestFail", { msg: t(aiErrorMessageKey(test.code)) })}
+            {test.detail ? ` — ${test.detail}` : ""}
           </span>
         )}
       </div>

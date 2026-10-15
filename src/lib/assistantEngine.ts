@@ -8,8 +8,9 @@ import { COLLOCATIONS, EMAIL_TEMPLATES } from "@/data/phrases";
 import { getLesson, getProgressFor } from "@/lib/storage";
 import { correctEnglish } from "@/lib/englishFix";
 import { CONVERSATIONS, CONVERSATION_EN } from "@/data/conversations";
-import { ROLES, getRole, setRole, clearRole, roleLabel, savePending, takePending, detectRole, type RoleId } from "./assistantRole";
-import type { AssistantChip, AssistantReply } from "@/lib/assistant";
+import { ROLES, getRole, setRole, clearRole, roleLabel, savePending, takePending, detectRole, getPath, setPath, type RoleId } from "./assistantRole";
+import { retrieve, careerPathById, careerPathOptions } from "@/lib/assistantKnowledge";
+import type { AssistantChip, AssistantReply, AssistantOption } from "@/lib/assistant";
 import type { Word } from "@/types";
 
 const ALL_WORDS: Word[] = [...WORDS, ...devWords];
@@ -23,6 +24,18 @@ function withChips(reply: AssistantReply, chips: AssistantChip[] = DEFAULT_CHIPS
 
 function roleOptions() {
   return ROLES.map((r) => ({ label: `${r.ar} — ${r.en}`, value: `role:${r.id}` }));
+}
+
+function pathOptions(isArabic: boolean): AssistantOption[] {
+  return careerPathOptions().map((p) => ({
+    label: `${p.icon} ${isArabic ? p.ar : p.en}`,
+    value: `path:${p.id}`,
+  }));
+}
+
+export interface AssistantRuntime {
+  /** المسار المهني المختار (يُمرَّر من الواجهة) لاستخدامه في التدريب. */
+  pathId?: string;
 }
 
 function askRoleText(isArabic: boolean): string {
@@ -222,7 +235,7 @@ export function learnerSnapshot() {
   return { weak, lesson };
 }
 
-export function assistantRespond(user: string): AssistantReply {
+export function assistantRespond(user: string, runtime: AssistantRuntime = {}): AssistantReply {
   const q = user.trim();
   if (!q) return { text: "" };
 
@@ -243,13 +256,33 @@ export function assistantRespond(user: string): AssistantReply {
     if (ROLES.some((r) => r.id === id)) {
       setRole(id as RoleId);
       const pending = takePending();
-      if (pending) return assistantRespond(pending);
+      if (pending) return assistantRespond(pending, runtime);
       return withChips({
         text: isArabic
           ? `ممتاز! سأخصّص ردودي لمجال «${roleLabel(id as RoleId, "ar")}». اسألني عن محادثة مع عميل، بريد مهني، أو كلمة ERP.`
           : `Great! I'll tailor answers to "${roleLabel(id as RoleId, "en")}". Ask me about a client conversation, a professional email, or an ERP word.`,
       });
     }
+  }
+
+  // اختيار المسار المهني (لتدريب المقابلات والسيناريوهات)
+  if (lower.startsWith("path:")) {
+    const id = q.slice(5).trim();
+    const path = careerPathById(id);
+    if (path) {
+      setPath(path.id);
+      return withChips({
+        text: isArabic
+          ? `تم اختيار المسار المهني: ${path.icon} «${path.titleAr}» (${path.title}).\nاطلب «تدريب مقابلة» ليأتيك سؤال من هذا المسار فقط.`
+          : `Career path set: ${path.icon} "${path.title}" (${path.titleAr}).\nAsk "Interview practice" to get a question from this path only.`,
+        chips: ["interview", "correct", "writeEmail"],
+        options: pathOptions(isArabic),
+      });
+    }
+    return withChips({
+      text: isArabic ? "اختر المسار المهني:" : "Pick a career path:",
+      options: pathOptions(isArabic),
+    });
   }
 
   const coreIntent = /correct|fix |check my|صوّب|صحح|تصحيح|explain|what is|define|meaning of|اشرح|معنى|random|عشوائ|email|write|report|ticket|message|بريد|اكتب|تقرير|تذكرة|interview|مقابل|lesson|درس|review|weak|ضعيف|مراجعة|career|path|job|مسار|وظيفة/.test(lower);
@@ -374,16 +407,33 @@ export function assistantRespond(user: string): AssistantReply {
 
   // تدريب مقابلة عمل
   if (lower.includes("interview") || lower.includes("مقابل")) {
-    const path =
+    const inText =
       CAREER.find((p) => lower.includes(p.title.toLowerCase())) ||
-      CAREER.find((p) => q.includes(p.titleAr)) ||
-      CAREER[Math.floor(Math.random() * CAREER.length)];
+      CAREER.find((p) => q.includes(p.titleAr));
+    const path = inText ?? careerPathById(runtime.pathId ?? getPath());
+    if (!path) {
+      return withChips({
+        text: isArabic
+          ? "لتخصّص تدريب المقابلة، اختر المسار المهني أولًا:"
+          : "To tailor the interview practice, pick a career path first:",
+        options: pathOptions(isArabic),
+      });
+    }
+    if (!path.interview?.length) {
+      return withChips({
+        text: isArabic
+          ? `لا توجد أسئلة مقابلة جاهزة لمسار «${path.titleAr}» بعد.`
+          : `No interview questions are ready for the "${path.title}" path yet.`,
+        options: pathOptions(isArabic),
+      });
+    }
     const iq = path.interview[Math.floor(Math.random() * path.interview.length)];
     return withChips({
       text: isArabic
         ? `تدريب مقابلة — مسار ${path.titleAr} (${path.title})\n\nسؤال (${iq.type}):\n${iq.q}\n${iq.qAr}\n\nإجابة نموذجية:\n${iq.a}\n${iq.aAr}\n\nجاوبني بالإنجليزية وسأصوّب لك.`
         : `Interview practice — ${path.title} path\n\nQuestion (${iq.type}):\n${iq.q}\n${iq.qAr}\n\nSample answer:\n${iq.a}\n${iq.aAr}\n\nAnswer in English and I'll correct you.`,
       chips: ["interview", "correct", "writeEmail"],
+      options: [{ label: isArabic ? "تغيير المسار" : "Change path", value: "path:ask" }],
     });
   }
 
@@ -438,9 +488,28 @@ export function assistantRespond(user: string): AssistantReply {
     return withChips({ text: `${ph.en}\n${ph.ar}` });
   }
 
+  // بحث محلي في بيانات التطبيق (وضع بدون اتصال)
+  const hits = retrieve(q, { limit: 4, minScore: 3 });
+  if (hits.length) {
+    const wordIds = hits.filter((h) => h.type === "word").map((h) => h.refId).slice(0, 4);
+    const body = hits
+      .map((h) => {
+        if (h.type === "word") {
+          const w = ALL_WORDS.find((x) => x.id === h.refId);
+          if (w) return wordToText(w, isArabic);
+        }
+        return `• ${h.title}\n${h.text}`;
+      })
+      .join("\n\n");
+    return withChips({
+      text: (isArabic ? "من بيانات التطبيق:\n\n" : "From app data:\n\n") + body,
+      wordIds: wordIds.length ? wordIds : undefined,
+    });
+  }
+
   // رد افتراضي
-  const hintAr = "يمكنني: شرح الكلمات، تدريب المقابلات، تصحيح أخطائك، الكتابة المهنية (بريد/تقرير)، المراجعة الذكية، وكلمة عشوائية.";
-  const hintEn = "I can: explain words, practice interviews, correct your mistakes, professional writing (email/report), smart revision, and a random word.";
+  const hintAr = "لا توجد نتيجة مطابقة في بيانات التطبيق. أستطيع: شرح الكلمات، تدريب المقابلات، تصحيح أخطائك، الكتابة المهنية (بريد/تقرير)، المراجعة الذكية، وكلمة عشوائية.";
+  const hintEn = "No matching result in app data. I can: explain words, practice interviews, correct your mistakes, professional writing (email/report), smart revision, and a random word.";
   return withChips({
     text: isArabic
       ? `${hintAr}\n\nجرّب: «اشرح invoice»، «صوّب: I have informations»، «اكتب بريد موافقة»، «تدريب مقابلة».`

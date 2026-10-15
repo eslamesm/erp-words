@@ -77,4 +77,24 @@ describe("assistantRespond", () => {
     const r = assistantRespond("role:accountant");
     expect(r.text.toLowerCase()).toContain("accountant");
   });
+
+  it("asks for a career path before interview practice when none is set", () => {
+    const r = assistantRespond("Interview practice");
+    expect(r.options?.some((o) => o.value === "path:implementer")).toBe(true);
+  });
+
+  it("uses the selected career path for interview practice", () => {
+    const r = assistantRespond("Interview practice", { pathId: "technical-support" });
+    expect(r.text).toContain("Technical Support");
+  });
+
+  it("sets the career path from a path: option", () => {
+    const r = assistantRespond("path:implementer");
+    expect(r.text).toContain("Implementer");
+  });
+
+  it("falls back to a local app-data answer when nothing else matches", () => {
+    const r = assistantRespond("المطابقة الثلاثية");
+    expect(r.text).toContain("بيانات التطبيق");
+  });
 });

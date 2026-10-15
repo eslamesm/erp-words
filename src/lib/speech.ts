@@ -89,9 +89,15 @@ function rankVoice(v: SpeechSynthesisVoice): number {
   return s;
 }
 
-function pickVoice(): SpeechSynthesisVoice | null {
+function pickVoice(lang?: string): SpeechSynthesisVoice | null {
   const list = window.speechSynthesis.getVoices();
   if (!list.length) return null;
+  const prefix = (lang || "en").toLowerCase().slice(0, 2);
+  // غير الإنجليزية: اختر صوتًا يطابق لغة الرد إن وُجد (مثل العربية).
+  if (prefix && prefix !== "en") {
+    const match = list.find((v) => v.lang.toLowerCase().startsWith(prefix));
+    if (match) return match;
+  }
   if (preferredVoiceName) {
     const want = preferredVoiceName.toLowerCase();
     const exact = list.find((v) => v.name.toLowerCase() === want);
@@ -99,7 +105,10 @@ function pickVoice(): SpeechSynthesisVoice | null {
     const partial = list.find((v) => v.name.toLowerCase().includes(want));
     if (partial) return partial;
   }
-  return [...list].sort((a, b) => rankVoice(b) - rankVoice(a))[0];
+  const ranked = list
+    .filter((v) => v.lang.toLowerCase().startsWith("en"))
+    .sort((a, b) => rankVoice(b) - rankVoice(a));
+  return ranked[0] ?? list[0];
 }
 
 function splitSentences(text: string): string[] {
@@ -139,7 +148,7 @@ export function speak(text: string, opts: SpeakOptions = {}) {
   const synth = window.speechSynthesis;
   const chunks = chunkText(text);
   const run = () => {
-    const voice = pickVoice();
+    const voice = pickVoice(opts.lang);
     let i = 0;
     const step = () => {
       if (i >= chunks.length) {
@@ -164,8 +173,6 @@ export function speak(text: string, opts: SpeakOptions = {}) {
   if (voicesReady) run();
   else pending.push(run);
 }
-
-// نطق عدة كلمات/جمل بالتتابع.
 export function speakWords(words: string[], opts: SpeakOptions = {}) {
   if (typeof window === "undefined" || !words.length) {
     opts.onEnd?.();
@@ -180,7 +187,7 @@ export function speakWords(words: string[], opts: SpeakOptions = {}) {
     }
     opts.onStart?.(words[i]);
     const run = () => {
-      const voice = pickVoice();
+      const voice = pickVoice(opts.lang);
       const u = new SpeechSynthesisUtterance(words[i]);
       u.lang = opts.lang ?? "en-US";
       u.rate = opts.rate ?? 0.95;

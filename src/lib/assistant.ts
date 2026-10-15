@@ -15,6 +15,14 @@ export type AssistantChip =
   | "writeEmail"
   | "correct";
 
+/** خطأ اتصال يمكن عرضه كفقاعة مستقلة مع إمكانية إعادة المحاولة. */
+export interface AssistantMessageError {
+  code: string;
+  detail?: string;
+  /** النص الأصلي الذي يمكن إعادة إرساله عند الضغط على "أعد المحاولة". */
+  retryText?: string;
+}
+
 export interface AssistantMessage {
   id: string;
   role: AssistantRole;
@@ -26,6 +34,8 @@ export interface AssistantMessage {
   chips?: AssistantChip[];
   /** خيارات ديناميكية (اختيار الوظيفة، سيناريوهات…). */
   options?: AssistantOption[];
+  /** عند وجوده، تُعرض الرسالة كخطأ اتصال مع زر إعادة المحاولة. */
+  error?: AssistantMessageError;
 }
 
 export interface AssistantContext {

@@ -30,6 +30,7 @@ export const ROLES: RoleDef[] = [
 
 const ROLE_KEY = "erp-vocab:assistant-role";
 const PENDING_KEY = "erp-vocab:assistant-pending";
+const PATH_KEY = "erp-vocab:assistant-path";
 
 export function getRole(): RoleId | null {
   if (typeof window === "undefined") return null;
@@ -51,6 +52,22 @@ export function roleLabel(id: RoleId | null, lang: string): string {
   const r = ROLES.find((x) => x.id === id);
   if (!r) return "";
   return lang === "en" ? r.en : r.ar;
+}
+
+/** المسار المهني المختار للتدريب على المقابلات والسيناريوهات. */
+export function getPath(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(PATH_KEY) || null;
+}
+
+export function setPath(id: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PATH_KEY, id);
+}
+
+export function clearPath() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(PATH_KEY);
 }
 
 export function savePending(q: string) {
