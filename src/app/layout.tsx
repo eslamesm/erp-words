@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import Link from "next/link";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
@@ -21,8 +22,11 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 
@@ -54,7 +58,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Nav />
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 pb-28 sm:pb-6">{children}</main>
         <footer className="border-t border-slate-200 py-4 pb-24 text-center text-xs text-slate-500 sm:pb-4 dark:border-slate-800 dark:text-slate-400">
-          ERP Words — تعلم المفردات الإنجليزية لأنظمة Enterprise Resource Planning
+          <span>ERP Words — تعلم المفردات الإنجليزية لأنظمة Enterprise Resource Planning</span>
+          <span className="mx-2">·</span>
+          <Link href="/about" className="font-semibold text-emerald-600 hover:underline dark:text-emerald-400">
+            عن التطبيق
+          </Link>
         </footer>
         <ServiceWorkerRegister />
         <WelcomeSplash />

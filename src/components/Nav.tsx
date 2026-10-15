@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { InstallButton } from "./InstallButton";
+import { BrandMark } from "./BrandMark";
 import { useProgress } from "@/hooks/useProgress";
 import { useT } from "@/hooks/useT";
 
@@ -49,9 +50,10 @@ export function Nav() {
           <div className="flex items-center justify-between gap-2">
             <Link
               href="/"
-              className="text-lg font-bold tracking-tight text-slate-900 dark:text-white"
+              className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 dark:text-white"
             >
-              {t("common.appName")} <span className="text-emerald-600">📘</span>
+              <BrandMark size={26} withBackground />
+              <span>{t("common.appName")}</span>
             </Link>
             <div className="flex items-center gap-2">
               <InstallButton compact />

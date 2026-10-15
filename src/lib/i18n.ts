@@ -8,6 +8,16 @@ type Dict = Record<string, string>;
 const ar: Dict = {
   // عام
   "common.appName": "ERP Words",
+  // الهوية
+  "brand.blurb":
+    "ERP Words هو مساعدك الذكي لتطوير لغتك الإنجليزية وتعلّم مصطلحات أنظمة ERP من خلال المحادثات التفاعلية والتدريبات العملية، لتعزيز مهاراتك اللغوية والمهنية.",
+  "brand.startChat": "ابدأ المحادثة",
+  "brand.startChatDesc": "تحدّث مع مساعدك الذكي لتطوير لغتك ومصطلحات ERP.",
+  "nav.about": "عن التطبيق",
+  "about.title": "عن التطبيق",
+  "about.blurbTitle": "نبذة عن التطبيق",
+  "about.versionLabel": "الإصدار",
+  "about.back": "العودة للرئيسية",
   "common.points": "نقطة",
   "common.xp": "XP",
   "common.day": "يوم",
@@ -564,6 +574,16 @@ const ar: Dict = {
 
 const en: Dict = {
   "common.appName": "ERP Words",
+  // Brand
+  "brand.blurb":
+    "ERP Words is your AI-powered assistant for improving your English and learning ERP terminology through interactive conversations and practical exercises, helping you grow your language skills and professional knowledge.",
+  "brand.startChat": "Start a conversation",
+  "brand.startChatDesc": "Chat with your AI assistant to grow your English and ERP terminology.",
+  "nav.about": "About",
+  "about.title": "About",
+  "about.blurbTitle": "About the app",
+  "about.versionLabel": "Version",
+  "about.back": "Back to home",
   "common.points": "pts",
   "common.xp": "XP",
   "common.day": "day",

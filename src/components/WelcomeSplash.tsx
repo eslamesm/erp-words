@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { ISLAMIC_MESSAGES, type IslamicMessage } from "@/data/islamicMessages";
+import { BrandMark } from "@/components/BrandMark";
+import { BRAND } from "@/lib/brand";
 import { useProgress } from "@/hooks/useProgress";
 import { useT } from "@/hooks/useT";
 
@@ -47,8 +49,9 @@ export function WelcomeSplash() {
         fading ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
     >
-      <div className="text-5xl drop-shadow-lg">📘</div>
+      <BrandMark size={72} withBackground className="drop-shadow-lg" />
       <div className="text-xl font-extrabold tracking-tight">{t("common.appName")}</div>
+      <div className="text-sm font-semibold tracking-wide text-emerald-50/95">{BRAND.taglineEn}</div>
       <div className="h-px w-20 bg-white/40" />
       <div className="flex min-h-[6rem] max-w-md flex-col items-center justify-center gap-2 px-1">
         {message ? (
