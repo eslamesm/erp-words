@@ -4,6 +4,46 @@ import { useEffect, useState } from "react";
 import { useT } from "@/hooks/useT";
 import { aiChat, AiError, DEFAULT_AI, readAiConfig, writeAiConfig, type AiConfig } from "@/lib/ai";
 
+interface AiPreset {
+  id: string;
+  labelKey?: string;
+  label?: string;
+  baseUrl: string;
+  model: string;
+  keysUrl: string;
+}
+
+const PRESETS: AiPreset[] = [
+  {
+    id: "openai",
+    label: "OpenAI",
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-4o-mini",
+    keysUrl: "https://platform.openai.com/api-keys",
+  },
+  {
+    id: "groq",
+    label: "Groq",
+    baseUrl: "https://api.groq.com/openai/v1",
+    model: "llama-3.3-70b-versatile",
+    keysUrl: "https://console.groq.com/keys",
+  },
+  {
+    id: "openrouter",
+    label: "OpenRouter",
+    baseUrl: "https://openrouter.ai/api/v1",
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+    keysUrl: "https://openrouter.ai/keys",
+  },
+  {
+    id: "ollama",
+    labelKey: "set.aiOllama",
+    baseUrl: "http://localhost:11434/v1",
+    model: "llama3.1",
+    keysUrl: "https://ollama.com/download",
+  },
+];
+
 export function AssistantSettings() {
   const { t, lang } = useT();
   const [cfg, setCfg] = useState<AiConfig>(DEFAULT_AI);
@@ -22,6 +62,10 @@ export function AssistantSettings() {
     setTimeout(() => setSaved(false), 1500);
   }
 
+  function applyPreset(p: AiPreset) {
+    save({ ...cfg, baseUrl: p.baseUrl, model: p.model });
+  }
+
   async function runTest() {
     setTest("testing");
     try {
@@ -38,10 +82,37 @@ export function AssistantSettings() {
   const field =
     "mt-1 w-full rounded-xl border-2 border-slate-300 px-4 py-2.5 outline-none transition-colors focus:border-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
+  const keysUrl =
+    PRESETS.find((p) => p.baseUrl.replace(/\/+$/, "") === cfg.baseUrl.replace(/\/+$/, ""))?.keysUrl ??
+    PRESETS[0].keysUrl;
+
   return (
     <section className="rounded-2xl border border-sky-200 bg-white p-5 shadow-sm dark:border-sky-900 dark:bg-slate-900">
       <h2 className="font-bold">{t("set.aiTitle")}</h2>
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t("set.aiDesc")}</p>
+
+      <div className="mt-4">
+        <div className="text-sm font-medium">{t("set.aiProvider")}</div>
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{t("set.aiProviderHint")}</p>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {PRESETS.map((p) => {
+            const active = cfg.baseUrl.replace(/\/+$/, "") === p.baseUrl.replace(/\/+$/, "");
+            return (
+              <button
+                key={p.id}
+                onClick={() => applyPreset(p)}
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+                  active
+                    ? "bg-sky-600 text-white"
+                    : "border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+              >
+                {p.label ?? t(p.labelKey!)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
@@ -86,7 +157,17 @@ export function AssistantSettings() {
           />
         </div>
       </div>
-      <p className="mt-2 text-xs text-slate-400">{t("set.aiKeyHint")}</p>
+      <p className="mt-2 text-xs text-slate-400">
+        {t("set.aiKeyHint")}{" "}
+        <a
+          href={keysUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-sky-600 underline hover:text-sky-500 dark:text-sky-400"
+        >
+          {t("set.aiGetKey")}
+        </a>
+      </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
