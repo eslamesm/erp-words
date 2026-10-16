@@ -78,9 +78,15 @@ export function AssistantSettings() {
   }
 
   async function runTest() {
+    // نحفظ الإعدادات الحالية أولًا حتى يختبر المساعد نفس المفتاح/الإعداد الذي سيستخدمه فعلًا
+    // في الدردشة (التي تقرأ الإعدادات المحفوظة).
+    const saved = writeAiConfig(cfg);
+    setCfg(saved);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
     setTest("testing");
     try {
-      await testConnection(cfg);
+      await testConnection(saved);
       setTest("ok");
     } catch (e) {
       if (e instanceof AiError) setTest({ code: e.code, detail: e.detail });
