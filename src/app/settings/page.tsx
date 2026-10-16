@@ -202,9 +202,14 @@ export default function SettingsPage() {
           ) : (
             <div className="mt-4 flex gap-3">
               <button
-                onClick={() => {
-                  logout();
+                onClick={async () => {
                   setConfirmLogout(false);
+                  try {
+                    await signOut();
+                  } catch {
+                    // تجاهل أخطاء الشبكة — نكمل الخروج محليًا
+                  }
+                  logout();
                 }}
                 className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
               >
