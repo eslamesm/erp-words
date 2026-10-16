@@ -1,5 +1,5 @@
 /* Service Worker: تحديث ذاتي + شبكة أولًا مع تخزين احتياطي للعمل دون اتصال */
-const VERSION = "mv10-brand";
+const VERSION = "mv11-uikit";
 const CACHE = `erp-vocab-${VERSION}`;
 const CORE = [
   "/",

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ISLAMIC_MESSAGES, type IslamicMessage } from "@/data/islamicMessages";
-import { BrandMark } from "@/components/BrandMark";
-import { BRAND } from "@/lib/brand";
+import { SplashScreen } from "@/components/ui/SplashScreen";
 import { useProgress } from "@/hooks/useProgress";
 import { useT } from "@/hooks/useT";
 
@@ -27,7 +26,6 @@ export function WelcomeSplash() {
   const { t } = useT();
   const { settings } = useProgress();
   const [visible, setVisible] = useState(true);
-  const [fading, setFading] = useState(false);
   const [message, setMessage] = useState<IslamicMessage | null>(null);
 
   useEffect(() => {
@@ -38,40 +36,36 @@ export function WelcomeSplash() {
   if (!visible || !(settings?.welcomeSplash ?? true)) return null;
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setFading(true);
-        setTimeout(() => setVisible(false), 300);
-      }}
-      aria-label={t("welcome.tap")}
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-emerald-700 via-teal-700 to-sky-700 px-5 text-center text-white transition-opacity duration-500 ${
-        fading ? "pointer-events-none opacity-0" : "opacity-100"
-      }`}
-    >
-      <BrandMark size={72} withBackground className="drop-shadow-lg" />
-      <div className="text-xl font-extrabold tracking-tight">{t("common.appName")}</div>
-      <div className="text-sm font-semibold tracking-wide text-emerald-50/95">{BRAND.taglineEn}</div>
-      <div className="h-px w-20 bg-white/40" />
-      <div className="flex min-h-[6rem] max-w-md flex-col items-center justify-center gap-2 px-1">
+    <SplashScreen interactive onDone={() => setVisible(false)}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, maxWidth: "28rem", padding: "0 4px" }}>
         {message ? (
           <>
-            <p lang="ar" dir="rtl" className="text-2xl font-bold leading-9 drop-shadow-md">
+            <p lang="ar" dir="rtl" style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, lineHeight: 1.9 }}>
               {message.ar}
             </p>
-            <p lang="en" dir="ltr" className="text-base leading-7 text-emerald-50/95">
+            <p lang="en" dir="ltr" style={{ margin: 0, fontSize: ".95rem", lineHeight: 1.8, color: "var(--muted)" }}>
               {message.en}
             </p>
-            <span className="text-[11px] font-medium text-emerald-100/80">
+            <span style={{ fontSize: ".7rem", color: "var(--muted)" }}>
               {message.sourceAr} · {message.sourceEn}
             </span>
           </>
         ) : null}
+        <p style={{ marginTop: 8, fontSize: ".85rem", color: "var(--muted)" }}>{t("welcome.subtitle")}</p>
+        <span
+          style={{
+            marginTop: 6,
+            borderRadius: 999,
+            background: "var(--tint)",
+            color: "var(--navy)",
+            padding: "8px 20px",
+            fontSize: ".85rem",
+            fontWeight: 700,
+          }}
+        >
+          {t("welcome.tap")}
+        </span>
       </div>
-      <p className="mt-2 max-w-sm text-sm text-emerald-50/90">{t("welcome.subtitle")}</p>
-      <span className="mt-2 rounded-full bg-white/20 px-5 py-2 text-sm font-semibold text-white/95 shadow-sm">
-        {t("welcome.tap")}
-      </span>
-    </button>
+    </SplashScreen>
   );
 }

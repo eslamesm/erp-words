@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { InstallButton } from "./InstallButton";
-import { BrandMark } from "./BrandMark";
+import { Logo } from "./ui/Logo";
+import { BottomNav, type Tab } from "./ui/BottomNav";
+import { SideMenu, type MenuId } from "./ui/SideMenu";
+import { IconMenu } from "./ui/icons";
 import { useProgress } from "@/hooks/useProgress";
 import { useT } from "@/hooks/useT";
+import type { Lang } from "@/lib/i18n";
 
 interface NavItem {
   href: string;
@@ -28,33 +32,66 @@ const LINKS: NavItem[] = [
   { href: "/settings", key: "nav.settings", icon: "⚙️" },
 ];
 
-// الأيقونات الظاهرة في الشريط السفلي على الموبايل (الباقي داخل قائمة «المزيد»)
-const PRIMARY = new Set(["/", "/lesson", "/vocabulary", "/conversations"]);
+const TAB_HREF: Record<Tab, string> = {
+  home: "/",
+  learn: "/lesson",
+  practice: "/games",
+  profile: "/achievements",
+};
+
+const MENU_HREF: Record<MenuId, string> = {
+  home: "/",
+  chats: "/conversations",
+  terms: "/vocabulary",
+  interviews: "/paths",
+  practice: "/games",
+  settings: "/settings",
+  about: "/about",
+};
+
+function tabFor(pathname: string): Tab {
+  if (pathname.startsWith("/lesson") || pathname.startsWith("/vocabulary") || pathname.startsWith("/words") || pathname.startsWith("/paths")) return "learn";
+  if (pathname.startsWith("/games") || pathname.startsWith("/pronounce") || pathname.startsWith("/quiz") || pathname.startsWith("/daily")) return "practice";
+  if (pathname.startsWith("/achievements") || pathname.startsWith("/settings") || pathname.startsWith("/progress")) return "profile";
+  return "home";
+}
+
+function menuFor(pathname: string): MenuId {
+  if (pathname.startsWith("/conversations")) return "chats";
+  if (pathname.startsWith("/vocabulary")) return "terms";
+  if (pathname.startsWith("/paths")) return "interviews";
+  if (pathname.startsWith("/games")) return "practice";
+  if (pathname.startsWith("/settings")) return "settings";
+  if (pathname.startsWith("/about")) return "about";
+  return "home";
+}
 
 export function Nav() {
   const pathname = usePathname();
-  const { t } = useT();
-  const { profile } = useProgress();
-  const [moreOpen, setMoreOpen] = useState(false);
+  const router = useRouter();
+  const { t, lang } = useT();
+  const { profile, settings, updateSettings } = useProgress();
+  const [menuOpen, setMenuOpen] = useState(false);
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname.startsWith(href));
-
-  const primaryLinks = LINKS.filter((l) => PRIMARY.has(l.href));
-  const moreLinks = LINKS.filter((l) => !PRIMARY.has(l.href));
-  const moreActive = moreLinks.some((l) => isActive(l.href));
 
   return (
     <>
       <nav className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
         <div className="mx-auto max-w-3xl px-3 pt-2.5">
           <div className="flex items-center justify-between gap-2">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 dark:text-white"
-            >
-              <BrandMark size={26} withBackground />
-              <span>{t("common.appName")}</span>
-            </Link>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setMenuOpen(true)}
+                aria-label={t("nav.more")}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+              >
+                <IconMenu size={22} />
+              </button>
+              <Link href="/" className="flex items-center gap-2">
+                <Logo variant="compact" tagline={t("ui.appTagline")} />
+              </Link>
+            </div>
             <div className="flex items-center gap-2">
               <InstallButton compact />
               {profile && (
@@ -94,67 +131,16 @@ export function Nav() {
         </div>
       </nav>
 
-      {moreOpen && (
-        <div className="fixed inset-0 z-30 sm:hidden" onClick={() => setMoreOpen(false)}>
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-          <div
-            className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-slate-200 bg-white p-5 pb-8 dark:border-slate-800 dark:bg-slate-950"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <h2 className="mb-3 text-sm font-bold text-slate-500 dark:text-slate-400">
-              {t("nav.more")}
-            </h2>
-            <div className="grid grid-cols-3 gap-3">
-              {moreLinks.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  onClick={() => setMoreOpen(false)}
-                  className={`flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-xs font-semibold transition-colors ${
-                    isActive(l.href)
-                      ? "bg-emerald-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <span className="text-2xl">{l.icon}</span>
-                  {t(l.key)}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <SideMenu
+        open={menuOpen}
+        lang={lang as Lang}
+        active={menuFor(pathname)}
+        onSelect={(id) => router.push(MENU_HREF[id])}
+        onClose={() => setMenuOpen(false)}
+        onLangChange={(l) => updateSettings({ ...settings, language: l })}
+      />
 
-      <nav className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur sm:hidden dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto flex max-w-3xl items-stretch justify-around">
-          {primaryLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[11px] font-medium transition-colors ${
-                isActive(l.href)
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-slate-500 dark:text-slate-400"
-              }`}
-            >
-              <span className="text-lg">{l.icon}</span>
-              {t(l.key)}
-            </Link>
-          ))}
-          <button
-            onClick={() => setMoreOpen((v) => !v)}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[11px] font-medium transition-colors ${
-              moreOpen || moreActive
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-slate-500 dark:text-slate-400"
-            }`}
-          >
-            <span className="text-lg">{moreOpen ? "✕" : "⋯"}</span>
-            {t("nav.more")}
-          </button>
-        </div>
-      </nav>
+      <BottomNav tab={tabFor(pathname)} onChange={(tab) => router.push(TAB_HREF[tab])} />
     </>
   );
 }

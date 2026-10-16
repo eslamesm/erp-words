@@ -1,20 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MODULES } from "@/data/modules";
 import { WORDS } from "@/data/words";
 import { isDue } from "@/lib/srs";
 import { useProgress } from "@/hooks/useProgress";
 import { Onboarding } from "@/components/Onboarding";
-import { BrandMark } from "@/components/BrandMark";
-import { BRAND } from "@/lib/brand";
+import { HomeScreen } from "@/components/ui/HomeScreen";
 import { gamificationLevel, MOTIVATIONAL, MOTIVATIONAL_EN, PLAN_META, reviewsToday } from "@/lib/plan";
 import { useT } from "@/hooks/useT";
+
+const FEATURE_HREF: Record<string, string> = {
+  smart: "/assistant",
+  erp: "/vocabulary",
+  interview: "/paths",
+  lang: "/settings",
+  voice: "/pronounce",
+};
 
 export default function HomePage() {
   const { profile, plan, stats, progress, createProfile, dailyToday, atRisk, freeze, freezeLeft, settings, updateSettings, today } =
     useProgress();
   const { t, lang } = useT();
+  const router = useRouter();
 
   if (!profile) {
     return <Onboarding onCreate={createProfile} />;
@@ -41,24 +50,12 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* الهوية: الشعار + النبذة + زر بدء المحادثة */}
-      <section className="flex flex-col items-center gap-3 rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <BrandMark size={56} withBackground />
-        <h2 className="text-2xl font-extrabold tracking-tight">{BRAND.name}</h2>
-        <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-          {lang === "en" ? BRAND.taglineEn : BRAND.taglineAr}
-        </p>
-        <p className="max-w-md text-sm leading-7 text-slate-600 dark:text-slate-300">
-          {t("brand.blurb")}
-        </p>
-        <Link
-          href="/assistant"
-          className="mt-1 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 px-6 py-3 font-bold text-white shadow transition-transform hover:scale-[1.02]"
-          title={t("brand.startChatDesc")}
-        >
-          {t("brand.startChat")}
-        </Link>
-      </section>
+      {/* الواجهة الجديدة: الترحيب + المميزات */}
+      <HomeScreen
+        showHeader={false}
+        onStartChat={() => router.push("/assistant")}
+        onFeature={(id) => router.push(FEATURE_HREF[id] ?? "/")}
+      />
 
       {/* بطاقة الملف الشخصي ونظام النقاط */}
       <section className="rounded-3xl bg-gradient-to-br from-slate-900 to-slate-700 p-6 text-white shadow-lg dark:from-slate-800 dark:to-indigo-950">
