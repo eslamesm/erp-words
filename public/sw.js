@@ -1,5 +1,5 @@
 /* Service Worker: تحديث ذاتي + شبكة أولًا مع تخزين احتياطي للعمل دون اتصال */
-const VERSION = "mvbk8vbu";
+const VERSION = "mvblqk6a";
 const CACHE = `erp-vocab-${VERSION}`;
 const CORE = [
   "/",
@@ -74,6 +74,32 @@ self.addEventListener("activate", (event) => {
       const keys = await caches.keys();
       await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
       await self.clients.claim();
+    })()
+  );
+});
+
+// عند النقر على إشعار التذكير اليومي: التركيز على نافذة التطبيق أو فتحها على صفحة المراجعة.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  const target = data.url || "/learn";
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of all) {
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client) {
+            try {
+              await client.navigate(target);
+            } catch {
+              // بعض المتصفحات تمنع التنقل؛ نكتفي بالتركيز
+            }
+          }
+          return;
+        }
+      }
+      if (self.clients.openWindow) await self.clients.openWindow(target);
     })()
   );
 });
