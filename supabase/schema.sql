@@ -11,6 +11,17 @@ create table if not exists public.user_state (
   created_at  timestamptz not null default now()
 );
 
+-- حد أقصى لحجم الحالة (1 ميغابايت) لمنع تضخّم الصف.
+-- NOT VALID: لا يُتحقّق من الصفوف الموجودة مسبقًا حتى لا يفشل الترحيل
+-- إذا كان أحد المستخدمين قد تجاوز الحد — القيد يسري على كل كتابة جديدة فقط.
+alter table public.user_state
+  drop constraint if exists user_state_data_size;
+alter table public.user_state
+  add constraint user_state_data_size check (pg_column_size(data) < 1000000) not valid;
+
+-- (اختياري) للتحقق لاحقًا من الصفوف القديمة بعد تقليل أحجامها:
+-- alter table public.user_state validate constraint user_state_data_size;
+
 -- تحديث updated_at تلقائيًا عند أي تعديل
 create or replace function public.touch_user_state()
 returns trigger

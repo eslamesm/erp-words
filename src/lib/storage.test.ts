@@ -72,6 +72,16 @@ describe("tombstones (deletes do not resurrect)", () => {
     expect(r.stores.notes).toEqual({});
   });
 
+  it("progress reset is not undone by older remote progress", () => {
+    const old = { wordId: "W", ease: 2.5, interval: 1, due: 0, reps: 5, lapses: 0, lastReviewed: 1000, correctCount: 5, wrongCount: 0 };
+    const fresh = { ...old, wordId: "N", reps: 1, lastReviewed: 9000 };
+    const r = st.mergeDocs(
+      doc({ progress: {} }, { marks: { "progress:reset": 5000 } }),
+      doc({ progress: { W: old, N: fresh } }, {})
+    );
+    expect(Object.keys(r.stores.progress)).toEqual(["N"]);
+  });
+
   it("legacy union minus tombstone", () => {
     const r = st.mergeDocs(
       doc({ bookmarks: [] }, { marks: { "bookmarks:W": -1 } }),

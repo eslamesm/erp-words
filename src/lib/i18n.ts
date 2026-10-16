@@ -318,7 +318,7 @@ const ar: Dict = {
 
   // رسالة الاستقبال
   "welcome.subtitle": "طريقك لإتقان مفردات ERP يبدأ الآن",
-  "welcome.tap": "اضغط للمتابعة",
+  "welcome.tap": "اضغط للبدء",
 
   // الرئيسية
   "home.progressPoints": "نقاط التقدم",
@@ -375,7 +375,7 @@ const ar: Dict = {
   "onb.agePlaceholder": "مثال: 32",
   "onb.nativeLanguage": "🗣️ لغتك الأم",
   "onb.continueToTest": "متابعة إلى الاختبار ←",
-  "onb.backToLogin": "← الرجوع لتسجيل الدخول",
+  "onb.backToLogin": "لديك حساب؟ سجّل الدخول لاسترجاع تقدّمك",
 
   // الإعدادات
   "set.title": "⚙️ الإعدادات",
@@ -390,6 +390,16 @@ const ar: Dict = {
   "set.syncUnavailable": "المزامنة السحابية غير مهيأة على هذا الإصدار.",
   "set.loggedInAs": "مسجّل الدخول كـ",
   "set.logoutAccount": "الخروج من الحساب",
+  "set.newPasswordTitle": "🔑 كلمة مرور جديدة",
+  "set.newPassword": "كلمة المرور الجديدة",
+  "set.confirmPassword": "تأكيد كلمة المرور",
+  "set.savePassword": "حفظ كلمة المرور",
+  "set.saving": "جارٍ…",
+  "set.passwordChanged": "تم تغيير كلمة المرور ✓",
+  "set.passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل.",
+  "set.passwordMismatch": "كلمتا المرور غير متطابقتين.",
+  "set.passwordFailed": "تعذّر تغيير كلمة المرور.",
+  "set.skip": "تخطّي",
   "set.scheduleTitle": "⏰ جدول التدريب اليومي",
   "set.scheduleDesc": "حدّد وقتًا يوميًا وستتلقى تنبيهات متكررة حتى تكمل مراجعات خطة اليوم ({n} مراجعة).",
   "set.scheduleEnable": "تفعيل الجدول اليومي",
@@ -908,7 +918,7 @@ const en: Dict = {
   "reading.listen": "Listen",
 
   "welcome.subtitle": "Your path to mastering ERP vocabulary starts now",
-  "welcome.tap": "Tap to continue",
+  "welcome.tap": "Tap to start",
 
   "home.progressPoints": "Progress points",
   "home.toNextLevel": "{n} more points to level up",
@@ -963,7 +973,7 @@ const en: Dict = {
   "onb.agePlaceholder": "e.g. 32",
   "onb.nativeLanguage": "🗣️ Native language",
   "onb.continueToTest": "Continue to the test →",
-  "onb.backToLogin": "← Back to sign in",
+  "onb.backToLogin": "Have an account? Sign in to restore your progress",
 
   "set.title": "⚙️ Settings",
   "set.subtitle": "Customize your learning and data.",
@@ -977,6 +987,16 @@ const en: Dict = {
   "set.syncUnavailable": "Cloud sync is not configured in this build.",
   "set.loggedInAs": "Signed in as",
   "set.logoutAccount": "Sign out of account",
+  "set.newPasswordTitle": "🔑 New password",
+  "set.newPassword": "New password",
+  "set.confirmPassword": "Confirm password",
+  "set.savePassword": "Save password",
+  "set.saving": "Saving…",
+  "set.passwordChanged": "Password changed ✓",
+  "set.passwordTooShort": "Password must be at least 6 characters.",
+  "set.passwordMismatch": "Passwords don't match.",
+  "set.passwordFailed": "Couldn't change the password.",
+  "set.skip": "Skip",
   "set.scheduleTitle": "⏰ Daily practice schedule",
   "set.scheduleDesc": "Set a daily time and you'll get repeated reminders until you finish today's plan reviews ({n} reviews).",
   "set.scheduleEnable": "Enable daily schedule",

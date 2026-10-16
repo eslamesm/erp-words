@@ -22,6 +22,7 @@ let user: AuthUser | null = null;
 let loading = true;
 const listeners = new Set<() => void>();
 let started = false;
+let recovering = false;
 
 function emit() {
   listeners.forEach((l) => l());
@@ -48,16 +49,24 @@ function ensureStarted() {
     loading = false;
     emit();
   });
-  sb.auth.onAuthStateChange((_event, session) => {
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") recovering = true;
     user = toUser(session);
     loading = false;
     emit();
   });
 }
 
+/** يُنهي وضع استعادة كلمة المرور بعد نجاح التغيير أو إلغائه. */
+export function endRecovery() {
+  recovering = false;
+  emit();
+}
+
 export function useAuth() {
   const currentUser = useSyncExternalStore(subscribe, () => user, () => null);
   const isLoading = useSyncExternalStore(subscribe, () => loading, () => true);
+  const isRecovering = useSyncExternalStore(subscribe, () => recovering, () => false);
   const sync = useSyncExternalStore<SyncState>(
     subscribeSync,
     getSyncState,
@@ -73,7 +82,7 @@ export function useAuth() {
     else stopSync();
   }, [currentUser]);
 
-  return { user: currentUser, loading: isLoading, sync, enabled: supabaseEnabled };
+  return { user: currentUser, loading: isLoading, sync, enabled: supabaseEnabled, recovering: isRecovering };
 }
 
 // ══ حالة الاتصال بالإنترنت ══

@@ -9,10 +9,12 @@
 
 const KEY_AI = "erp-vocab:ai";
 
+// الافتراضي مزوّد بطبقة مجانية (Groq) — يكفي المستخدم إنشاء مفتاح مجاني دون بطاقة.
+// بدون مفتاح يعمل المساعد المحلي تلقائيًا.
 export const DEFAULT_AI: AiConfig = {
-  baseUrl: "https://api.openai.com/v1",
+  baseUrl: "https://api.groq.com/openai/v1",
   apiKey: "",
-  model: "gpt-4o-mini",
+  model: "llama-3.3-70b-versatile",
 };
 
 export interface AiConfig {
@@ -268,7 +270,19 @@ export async function aiChat(
 
   try {
     if (options.onToken) {
-      // جرّب البث، وإن لم يدعمه المزوّد (لا أجزاء) أعد الطلب بدون بث.
+      // إن أعاد المزوّد JSON عاديًا (لا يدعم البث) نقرأه مباشرة بدل إعادة الطلب
+      // حتى لا يُستهلك رصيد المستخدم مرتين.
+      const type = res.headers.get("content-type") ?? "";
+      if (type.includes("application/json")) {
+        const data = (await res.json()) as {
+          choices?: { message?: { content?: string } }[];
+        };
+        const content = data.choices?.[0]?.message?.content?.trim();
+        if (!content) throw new AiError("empty");
+        options.onToken(content, content);
+        return content;
+      }
+      // جرّب البث، وإن فشلت قراءته أعد الطلب بدون بث كملاذ أخير.
       let full = "";
       try {
         full = await parseStream(res, options.onToken);

@@ -20,7 +20,7 @@ const NATIVE_LANGUAGES = ["العربية", "English", "Français", "Türkçe", 
 export function Onboarding({ onCreate }: Props) {
   const { user, sync } = useAuth();
   const { t } = useT();
-  const [step, setStep] = useState<Step>(supabaseEnabled ? "auth" : "profile");
+  const [step, setStep] = useState<Step>("profile");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [language, setLanguage] = useState("العربية");

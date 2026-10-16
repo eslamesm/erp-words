@@ -34,6 +34,20 @@ export interface SyncState {
 const INITIAL: SyncState = { status: "off" };
 const TABLE = "user_state";
 
+// الحد الفعلي في قاعدة البيانات 1,000,000 بايت؛ نستخدم هامش أمان أصغر
+// حتى لا نرسل ما سيُرفض، ولنعطي المستخدم رسالة واضحة بدل خطأ قاعدة بيانات.
+const SAFE_STATE_BYTES = 900_000;
+const SIZE_ERROR =
+  "حجم بياناتك تجاوز الحد المسموح للمزامنة. قرّب بعض المحادثات/الملاحظات القديمة ثم أعد المحاولة (بياناتك محفوظة محليًا).";
+
+function friendlySyncError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e ?? "");
+  if (/user_state_data_size|check constraint|too large|value too long/i.test(msg)) {
+    return SIZE_ERROR;
+  }
+  return msg || "خطأ غير معروف";
+}
+
 let state: SyncState = INITIAL;
 const listeners = new Set<() => void>();
 
@@ -96,6 +110,13 @@ export async function pushPull(uid: string): Promise<void> {
     const remoteStores = remote ? JSON.stringify(remote.stores) : "";
     const mergedStores = JSON.stringify(merged.stores);
     if (remoteStores !== mergedStores) {
+      const payloadBytes = new TextEncoder().encode(
+        JSON.stringify(merged)
+      ).length;
+      if (payloadBytes > SAFE_STATE_BYTES) {
+        setState({ status: "error", error: SIZE_ERROR });
+        return;
+      }
       const { error: upErr } = await sb
         .from(TABLE)
         .upsert(
@@ -111,7 +132,7 @@ export async function pushPull(uid: string): Promise<void> {
     applying = false;
     setState({
       status: isOnline() ? "error" : "offline",
-      error: e instanceof Error ? e.message : "خطأ غير معروف",
+      error: friendlySyncError(e),
     });
   } finally {
     running = false;

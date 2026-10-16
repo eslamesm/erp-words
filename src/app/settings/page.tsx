@@ -7,6 +7,7 @@ import { WORDS } from "@/data/words";
 import { PLAN_META } from "@/lib/plan";
 import { InstallButton } from "@/components/InstallButton";
 import { AuthPanel } from "@/components/AuthPanel";
+import { NewPasswordForm } from "@/components/NewPasswordForm";
 import { AssistantSettings } from "@/components/AssistantSettings";
 import { SyncStatus } from "@/components/SyncStatus";
 import { UpdateCenter } from "@/components/UpdateCenter";
@@ -20,7 +21,7 @@ export default function SettingsPage() {
   const { settings, updateSettings, reset, profile, logout, updateProfile, backup, restore, freezeLeft, plan } =
     useProgress();
   const { t, lang } = useT();
-  const { user, enabled } = useAuth();
+  const { user, enabled, recovering } = useAuth();
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
@@ -226,6 +227,10 @@ export default function SettingsPage() {
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             {t("set.syncUnavailable")}
           </p>
+        ) : recovering && user ? (
+          <div className="mt-3">
+            <NewPasswordForm />
+          </div>
         ) : user ? (
           <>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">

@@ -13,7 +13,7 @@ export function LogoMark({ size = 56 }: { size?: number }) {
   if (useFile) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={LOGO_SRC} width={size} height={size} alt="" onError={() => setUseFile(false)} />
+      <img src={LOGO_SRC} width={size} height={size} alt="ERP Words" onError={() => setUseFile(false)} />
     );
   }
   return (

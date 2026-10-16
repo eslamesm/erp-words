@@ -605,9 +605,13 @@ export function importData(json: string): boolean {
   }
 }
 
+const PROGRESS_RESET_MARK = "progress:reset";
+
 export function resetAll() {
   const meta = readMeta();
   meta.deviceStats = {};
+  // شاهد إعادة الضبط: يمنع الدمج من إعادة تقدّم قديم من أجهزة أخرى بعد المزامنة
+  meta.marks = { ...(meta.marks ?? {}), [PROGRESS_RESET_MARK]: Date.now() };
   writeMeta(meta);
   progressStore.set({});
   statsStore.setRaw(EMPTY_STATS);
@@ -777,12 +781,19 @@ function progressScore(p: WordProgress): number {
 
 function mergeProgress(
   a: Record<string, WordProgress>,
-  b: Record<string, WordProgress>
+  b: Record<string, WordProgress>,
+  resetAt = 0
 ): Record<string, WordProgress> {
   const out: Record<string, WordProgress> = { ...a };
   for (const [id, rb] of Object.entries(b ?? {})) {
     const ra = out[id];
     out[id] = !ra || progressScore(rb) >= progressScore(ra) ? rb : ra;
+  }
+  if (resetAt > 0) {
+    // نُسقط أي كلمة لم تُراجَع بعد آخر إعادة ضبط
+    for (const id of Object.keys(out)) {
+      if ((out[id].lastReviewed ?? 0) <= resetAt) delete out[id];
+    }
   }
   return out;
 }
@@ -1044,7 +1055,7 @@ export function mergeDocs(local: SyncDoc, remote: SyncDoc): SyncDoc {
   return {
     version: 2,
     stores: {
-      progress: mergeProgress(ls.progress ?? {}, rs.progress ?? {}),
+      progress: mergeProgress(ls.progress ?? {}, rs.progress ?? {}, marks[PROGRESS_RESET_MARK] ?? 0),
       bookmarks: mergeMembership("bookmarks:", ls.bookmarks ?? [], rs.bookmarks ?? [], marks),
       stats,
       settings: newer("settings") ? rs.settings : ls.settings,

@@ -1,5 +1,5 @@
 /* Service Worker: تحديث ذاتي + شبكة أولًا مع تخزين احتياطي للعمل دون اتصال */
-const VERSION = "mv11-uikit";
+const VERSION = "mvbgnqad";
 const CACHE = `erp-vocab-${VERSION}`;
 const CORE = [
   "/",
@@ -9,11 +9,54 @@ const CORE = [
   "/icons/icon-512.png",
 ];
 
+// صفحات تُخزَّن مسبقًا مع ملفاتها (JS/CSS) لتعمل دون اتصال من أول مرة.
+const ROUTES = [
+  "/lesson",
+  "/learn",
+  "/words",
+  "/quiz",
+  "/phrases",
+  "/conversations",
+  "/games",
+  "/progress",
+  "/daily",
+  "/paths",
+  "/settings",
+];
+
+const STATIC_RE = /\/_next\/static\/[^"'\s\\)<>]+/g;
+
+async function precacheRoute(cache, url) {
+  try {
+    const res = await fetch(url, { cache: "reload" });
+    if (!res || res.status !== 200) return;
+    const html = await res.clone().text();
+    await cache.put(url, res);
+    const assets = new Set(html.replace(/\\u002F|\\\//g, "/").match(STATIC_RE) || []);
+    await Promise.all(
+      [...assets].map(async (a) => {
+        if (await cache.match(a)) return;
+        try {
+          const r = await fetch(a);
+          if (r && r.status === 200) await cache.put(a, r);
+        } catch {
+          // تجاهل: أصل واحد فاشل لا يمنع البقية
+        }
+      })
+    );
+  } catch {
+    // تجاهل أخطاء الشبكة أثناء التثبيت
+  }
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE);
       await Promise.all(CORE.map((url) => cache.add(url).catch(() => {})));
+      // الصفحة الرئيسية وبقية المسارات الأساسية مع أصولها
+      await precacheRoute(cache, "/");
+      await Promise.all(ROUTES.map((r) => precacheRoute(cache, r)));
       // تفعيل النسخة الجديدة فورًا دون انتظار إغلاق كل النوافذ
       await self.skipWaiting();
     })()
@@ -47,6 +90,26 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // واجهات API (الإصدار وغيره) لا تُخزَّن أبدًا
+  if (url.pathname.startsWith("/api/") || url.pathname === "/version.json") return;
+
+  // ملفات Next المجزّأة بالتجزئة (ثابتة): الكاش أولًا للسرعة والعمل دون اتصال
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(
+      caches.match(req).then(
+        (hit) =>
+          hit ||
+          fetch(req).then((res) => {
+            if (res && res.status === 200 && res.type === "basic") {
+              const copy = res.clone();
+              caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+            }
+            return res;
+          })
+      )
+    );
+    return;
+  }
 
   const isHtml =
     req.mode === "navigate" ||

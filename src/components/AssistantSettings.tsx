@@ -24,25 +24,25 @@ interface AiPreset {
 
 const PRESETS: AiPreset[] = [
   {
-    id: "openai",
-    label: "OpenAI",
-    baseUrl: "https://api.openai.com/v1",
-    model: "gpt-4o-mini",
-    keysUrl: "https://platform.openai.com/api-keys",
-  },
-  {
     id: "groq",
-    label: "Groq",
+    label: "Groq · Free",
     baseUrl: "https://api.groq.com/openai/v1",
     model: "llama-3.3-70b-versatile",
     keysUrl: "https://console.groq.com/keys",
   },
   {
     id: "openrouter",
-    label: "OpenRouter",
+    label: "OpenRouter · Free",
     baseUrl: "https://openrouter.ai/api/v1",
     model: "meta-llama/llama-3.3-70b-instruct:free",
     keysUrl: "https://openrouter.ai/keys",
+  },
+  {
+    id: "openai",
+    label: "OpenAI",
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-4o-mini",
+    keysUrl: "https://platform.openai.com/api-keys",
   },
   {
     id: "ollama",
@@ -132,7 +132,7 @@ export function AssistantSettings() {
             id="ai-base"
             dir="ltr"
             value={cfg.baseUrl}
-            placeholder="https://api.openai.com/v1"
+            placeholder="https://api.groq.com/openai/v1"
             onChange={(e) => setCfg({ ...cfg, baseUrl: e.target.value })}
             className={field}
           />
@@ -145,7 +145,7 @@ export function AssistantSettings() {
             id="ai-model"
             dir="ltr"
             value={cfg.model}
-            placeholder="gpt-4o-mini"
+            placeholder="llama-3.3-70b-versatile"
             onChange={(e) => setCfg({ ...cfg, model: e.target.value })}
             className={field}
           />
@@ -160,7 +160,7 @@ export function AssistantSettings() {
             type="password"
             autoComplete="off"
             value={cfg.apiKey}
-            placeholder="sk-..."
+            placeholder="gsk_... / sk-..."
             onChange={(e) => setCfg({ ...cfg, apiKey: e.target.value })}
             className={field}
           />

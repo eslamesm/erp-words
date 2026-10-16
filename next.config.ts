@@ -24,7 +24,33 @@ function stampVersion() {
   }
 }
 
-stampVersion();
+// نختم الإصدار أثناء بناء الإنتاج فقط حتى لا يتغير الملف في git عند التطوير.
+if (process.argv.includes("build")) {
+  stampVersion();
+}
+
+// سياسة أمان المحتوى (CSP).
+// ملاحظة: نحتفظ بـ 'unsafe-inline' للسكربتات لأن Next يحقن سكربتات مضمّنة وسكربت الثيم،
+// والـ nonce يتطلب تصييرًا ديناميكيًا يتعارض مع cacheComponents. ما نقيّده فعليًا:
+// المصادر الخارجية للسكربت/الإطارات/الكائنات، والقاعدة، ونماذج الإرسال.
+// connect-src مفتوح على https لأن المستخدم يختار مزوّد الذكاء الاصطناعي بنفسه (BYOK)،
+// ويسمح بـ Ollama المحلي عبر http://localhost.
+const isDev = process.env.NODE_ENV !== "production";
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "media-src 'self' blob:",
+  `connect-src 'self' https: wss: http://localhost:* http://127.0.0.1:*${isDev ? " ws:" : ""}`,
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+].join("; ");
 
 const nextConfig: NextConfig = {
   env: {
@@ -48,6 +74,16 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: csp },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self)" },
+        ],
+      },
       {
         source: "/sw.js",
         headers: [

@@ -1,5 +1,7 @@
 {
   "ar": [
+    "📴 العمل دون اتصال: تُخزَّن الدروس والكلمات والاختبارات والألعاب وبقية الصفحات الأساسية مع ملفاتها عند التثبيت. 🆓 المساعد الذكي يبدأ الآن بمزوّد مجاني (Groq) مع زرّي Groq وOpenRouter المجانيين. 🛡️ سياسة أمان المحتوى (CSP) مفعّلة.",
+    "🔑 إصلاح استعادة كلمة المرور (نموذج كلمة مرور جديدة بعد فتح الرابط)، وإعادة ضبط التقدّم لم تعد تُلغى بعد المزامنة، وشاشة البداية تبدأ بالتجربة بدون حساب.",
     "🔌 اتصال ذكاء اصطناعي موحّد: «اختبار الاتصال» صار يستخدم نفس مسار الدردشة الحقيقي، مع تصحيح تلقائي لاسم الموديل لدى OpenRouter (مثل openai/gpt-4o-mini)، ومهلة 30 ثانية، وعرض الرد تدريجيًا (streaming).",
     "⚠️ أخطاء واضحة بدل الرد الوهمي: عند فشل الاتصال يظهر سبب مفصّل (مفتاح مرفوض، لا رصيد، تجاوز الحد، موديل غير موجود، شبكة/CORS، انتهاء المهلة) مع زرّي «أعد المحاولة» و«استخدم البحث المحلي».",
     "🌐 الرد بلغة رسالتك: يجيب المساعد بالعربية أو الإنجليزية حسب آخر رسالة كتبتها أنت — لا حسب لغة واجهة التطبيق.",
@@ -29,6 +31,8 @@
     "🧪 بنية اختبارات (Vitest) للأدوات الأساسية لضمان ثباتها مع كل تحديث."
   ],
   "en": [
+    "📴 Offline: lessons, words, quizzes, games and the other core pages are now precached with their assets on install. 🆓 The AI assistant defaults to a free provider (Groq), with free Groq and OpenRouter presets. 🛡️ Content Security Policy (CSP) is enabled.",
+    "🔑 Fixed password recovery (new-password form after opening the link), progress reset is no longer undone by sync, and onboarding now starts without requiring an account.",
     "🔌 Unified AI connection: \"Test connection\" now uses the exact same chat path as real conversations, auto-fixes the model name for OpenRouter (e.g. openai/gpt-4o-mini), applies a 30s timeout, and streams the reply progressively.",
     "⚠️ Clear errors instead of a fake reply: on failure you see the real reason (rejected key, no credit, rate limit, model not found, network/CORS, timeout) with \"Retry\" and \"Use local search\" buttons.",
     "🌐 Replies in your message's language: the assistant answers in Arabic or English based on your last message, not the app UI language.",

@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ERP Words
 
-## Getting Started
+تطبيق ويب (PWA) لتعلّم الإنجليزية المهنية ومصطلحات أنظمة ERP: مفردات بالتكرار المتباعد، درس يومي، محادثات، مسارات مهنية، ألعاب، تدريب نطق، ومساعد ذكي.
+A bilingual (AR/EN) PWA for learning professional English and ERP terminology.
 
-First, run the development server:
+- **الواجهة:** Next.js 16 · React 19 · TypeScript · Tailwind 4
+- **البيانات:** تُحفظ محليًا (localStorage)، ومزامنة اختيارية عبر Supabase
+- **المساعد الذكي:** محرّك محلي بلا مفتاح، أو أي مزوّد متوافق مع OpenAI بمفتاحك (BYOK) — مثل Groq أو OpenRouter أو Ollama (مجانية/محلية)
+- **النطق:** Web Speech API في المتصفح
+
+## التشغيل
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+npm run dev        # http://localhost:3000
+npm run lint
+npm test
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## إعداد المزامنة السحابية (اختياري)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. أنشئ مشروعًا مجانيًا في [Supabase](https://supabase.com).
+2. شغّل `supabase/schema.sql` في SQL Editor.
+3. انسخ `.env.example` إلى `.env.local` وضع الرابط والمفتاح العام (anon).
+4. في Supabase → Authentication → URL Configuration أضف رابط موقعك ورابط `/settings` لاستعادة كلمة المرور.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> ملاحظة: مشاريع Supabase المجانية تُوقَف مؤقتًا بعد أسبوع تقريبًا بلا نشاط.
 
-## Learn More
+## المساعد الذكي المجاني
 
-To learn more about Next.js, take a look at the following resources:
+الافتراضي في الإعدادات هو Groq (طبقة مجانية، يلزم مفتاح مجاني من console.groq.com بلا بطاقة). بدائل مجانية: OpenRouter (نماذج `:free`) أو Ollama محليًا. بدون مفتاح يعمل المساعد المحلي. أسماء النماذج المجانية تتغيّر من حين لآخر، فعدّلها من الإعدادات إن رفضها المزوّد.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## العمل دون اتصال والأمان
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `public/sw.js` يخزّن الصفحات الأساسية وملفاتها عند التثبيت؛ عدّل قائمة `ROUTES` فيه عند إضافة صفحات.
+- CSP معرّفة في `next.config.ts`. تبقى `unsafe-inline` للسكربتات لأن Next يحقن سكربتات مضمّنة، و`connect-src` يسمح بـ https لأن المستخدم يختار مزوّده.
 
-## Deploy on Vercel
+## النشر
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+مجانًا على Vercel (Hobby) أو Cloudflare Pages. أضف متغيرات البيئة نفسها في إعدادات المشروع.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## البنية
+
+- `src/app` الصفحات · `src/components` المكوّنات · `src/data` المحتوى · `src/lib` المنطق (SRS، المزامنة، المساعد) · `src/hooks`
+- `public/sw.js` خدمة العمل دون اتصال والتحديث الذاتي · `release-notes.json` ملاحظات الإصدار المعروضة داخل التطبيق

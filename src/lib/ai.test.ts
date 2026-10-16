@@ -137,6 +137,17 @@ describe("aiChat", () => {
     expect(full).toBe("Hello");
     expect(tokens).toEqual(["Hel|Hel", "lo|Hello"]);
   });
+
+  it("reads a plain JSON reply in stream mode without a second request", async () => {
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(okResponse("Hi there"));
+    const seen: string[] = [];
+    const full = await aiChat([{ role: "user", content: "hi" }], CFG, {
+      onToken: (_t, whole) => seen.push(whole),
+    });
+    expect(full).toBe("Hi there");
+    expect(seen).toEqual(["Hi there"]);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("testConnection", () => {
