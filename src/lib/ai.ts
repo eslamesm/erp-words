@@ -184,6 +184,18 @@ async function readErrorDetail(res: Response): Promise<string> {
   }
 }
 
+interface ChatMessage {
+  content?: string;
+  reasoning?: string;
+}
+
+// موديلات التفكير (مثل openai/gpt-oss على Groq) قد تضع الناتج في الحقل `reasoning`
+// بدل `content` عندما لا يكفي حد الرموز؛ نقرأ الاثنين لتفادي ردّ فارغ خاطئ.
+function pickReply(message?: ChatMessage): string {
+  const content = (message?.content ?? "").trim();
+  return content || (message?.reasoning ?? "").trim();
+}
+
 async function parseStream(
   res: Response,
   onToken: (token: string, full: string) => void
@@ -193,6 +205,7 @@ async function parseStream(
   const decoder = new TextDecoder();
   let buffer = "";
   let full = "";
+  let reasoning = "";
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -206,18 +219,20 @@ async function parseStream(
       if (!payload || payload === "[DONE]") continue;
       try {
         const json = JSON.parse(payload) as {
-          choices?: { delta?: { content?: string } }[];
+          choices?: { delta?: { content?: string; reasoning?: string } }[];
         };
-        const token = json.choices?.[0]?.delta?.content;
-        if (token) {
-          full += token;
-          onToken(token, full);
-        }      } catch {
+        const delta = json.choices?.[0]?.delta;
+        if (delta?.reasoning) reasoning += delta.reasoning;
+        if (delta?.content) {
+          full += delta.content;
+          onToken(delta.content, full);
+        }
+      } catch {
         // تجاهل أجزاء غير مكتملة
       }
     }
   }
-  return full.trim();
+  return full.trim() || reasoning.trim();
 }
 
 /**
@@ -254,7 +269,7 @@ export async function aiChat(
         model,
         messages,
         temperature: options.temperature ?? 0.6,
-        max_tokens: options.maxTokens ?? 700,
+        max_tokens: options.maxTokens ?? 1024,
         ...(options.onToken ? { stream: true } : {}),
       }),
       signal,
@@ -286,9 +301,9 @@ export async function aiChat(
       const type = res.headers.get("content-type") ?? "";
       if (type.includes("application/json")) {
         const data = (await res.json()) as {
-          choices?: { message?: { content?: string } }[];
+          choices?: { message?: ChatMessage }[];
         };
-        const content = data.choices?.[0]?.message?.content?.trim();
+        const content = pickReply(data.choices?.[0]?.message);
         if (!content) throw new AiError("empty");
         options.onToken(content, content);
         return content;
@@ -311,9 +326,9 @@ export async function aiChat(
       return full;
     }
     const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
+      choices?: { message?: ChatMessage }[];
     };
-    const content = data.choices?.[0]?.message?.content?.trim();
+    const content = pickReply(data.choices?.[0]?.message);
     if (!content) throw new AiError("empty");
     return content;
   } finally {
@@ -334,7 +349,7 @@ export async function testConnection(cfg: AiConfig): Promise<void> {
       },
     ],
     cfg,
-    { timeoutMs: 20_000, maxTokens: 8, temperature: 0 }
+    { timeoutMs: 20_000, maxTokens: 512, temperature: 0 }
   );
 }
 

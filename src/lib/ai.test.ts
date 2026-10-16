@@ -73,6 +73,16 @@ describe("aiChat", () => {
     await expect(aiChat([{ role: "user", content: "hi" }], CFG)).resolves.toBe("Hello!");
   });
 
+  it("falls back to message.reasoning when content is empty (reasoning models)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ choices: [{ message: { content: "", reasoning: "OK" } }] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    await expect(aiChat([{ role: "user", content: "hi" }], CFG)).resolves.toBe("OK");
+  });
+
   it("maps a 401 to unauthorized with provider detail", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ error: { message: "Invalid key" } }), { status: 401 })
