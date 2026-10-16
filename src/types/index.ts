@@ -105,6 +105,8 @@ export interface Profile {
   age?: number;
   nativeLanguage?: string;
   avatar?: string;
+  // وقت آخر تعديل صريح للصورة (رفع/حذف) — يُستخدم لحسم الدمج ولا يتأثر بتغيّر XP.
+  avatarAt?: number;
   planOverrides?: {
     newWordsPerDay?: number;
     reviewsPerDay?: number;

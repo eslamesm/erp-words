@@ -70,7 +70,7 @@ export default function SettingsPage() {
   async function handleAvatar(file: File) {
     try {
       const dataUrl = await resizeImageToDataUrl(file);
-      updateProfile({ avatar: dataUrl });
+      updateProfile({ avatar: dataUrl, avatarAt: Date.now() });
       setAvatarMsg(null);
     } catch {
       setAvatarMsg(t("set.avatarBad"));
@@ -126,7 +126,7 @@ export default function SettingsPage() {
               </button>
               {profile.avatar && (
                 <button
-                  onClick={() => updateProfile({ avatar: undefined })}
+                  onClick={() => updateProfile({ avatar: undefined, avatarAt: Date.now() })}
                   className="rounded-xl border-2 border-rose-300 px-5 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950"
                 >
                   {t("set.avatarRemove")}

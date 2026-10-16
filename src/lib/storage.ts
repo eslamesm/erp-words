@@ -968,6 +968,16 @@ function mergeProfile(
   if (!a) return b;
   if (!b) return a;
   const base = remoteNewer ? b : a;
+  // الصورة الشخصية: يحسمها وقت آخر تعديل صريح (avatarAt) وليس updatedAt العام،
+  // لأن تغيّر XP يُحدّث updatedAt أيضًا. هذا يسمح بالحذف/التغيير ولا يعيد صورة محذوفة.
+  const avatarAtA = a.avatarAt ?? 0;
+  const avatarAtB = b.avatarAt ?? 0;
+  const hasAvatarAt = avatarAtA > 0 || avatarAtB > 0;
+  const avatar = hasAvatarAt
+    ? avatarAtA >= avatarAtB
+      ? a.avatar
+      : b.avatar
+    : a.avatar ?? b.avatar;
   return {
     name: base.name,
     level: base.level,
@@ -978,7 +988,8 @@ function mergeProfile(
     motivational: base.motivational,
     age: base.age ?? a.age ?? b.age,
     nativeLanguage: base.nativeLanguage ?? a.nativeLanguage ?? b.nativeLanguage,
-    avatar: base.avatar ?? a.avatar ?? b.avatar,
+    avatar,
+    avatarAt: hasAvatarAt ? Math.max(avatarAtA, avatarAtB) : undefined,
     planOverrides: remoteNewer
       ? { ...(a.planOverrides ?? {}), ...(b.planOverrides ?? {}) }
       : { ...(b.planOverrides ?? {}), ...(a.planOverrides ?? {}) },

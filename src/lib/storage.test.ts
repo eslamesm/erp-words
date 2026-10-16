@@ -91,6 +91,42 @@ describe("tombstones (deletes do not resurrect)", () => {
   });
 });
 
+describe("profile avatar set/remove", () => {
+  const prof = (over: Record<string, unknown>) => ({
+    name: "A",
+    level: "A2",
+    planType: "p",
+    xp: 0,
+    badges: [],
+    joinedAt: 1,
+    ...over,
+  });
+
+  it("a removed avatar does not come back from an older remote copy", () => {
+    const r = st.mergeDocs(
+      doc({ profile: prof({ avatarAt: 2000 }) }, { updatedAt: { profile: 2000 } }),
+      doc({ profile: prof({ avatar: "data:old", avatarAt: 1000 }) }, { updatedAt: { profile: 3000 } })
+    );
+    expect((r.stores.profile as { avatar?: string }).avatar).toBeUndefined();
+  });
+
+  it("a newly set avatar wins over an older one even if remote was touched later", () => {
+    const r = st.mergeDocs(
+      doc({ profile: prof({ avatar: "data:new", avatarAt: 5000 }) }, { updatedAt: { profile: 5000 } }),
+      doc({ profile: prof({ avatar: "data:old", avatarAt: 1000 }) }, { updatedAt: { profile: 9000 } })
+    );
+    expect((r.stores.profile as { avatar?: string }).avatar).toBe("data:new");
+  });
+
+  it("keeps an existing avatar when the other side has no avatar edits", () => {
+    const r = st.mergeDocs(
+      doc({ profile: prof({ avatar: "data:kept", avatarAt: 4000 }) }, { updatedAt: { profile: 4000 } }),
+      doc({ profile: prof({}) }, { updatedAt: { profile: 9000 } })
+    );
+    expect((r.stores.profile as { avatar?: string }).avatar).toBe("data:kept");
+  });
+});
+
 describe("stats aggregation across devices", () => {
   it("sums reviews of two devices", () => {
     const agg = st.aggregateStats(
