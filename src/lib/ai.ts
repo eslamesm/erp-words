@@ -9,12 +9,18 @@
 
 const KEY_AI = "erp-vocab:ai";
 
+// موديلات Groq التي أُوقفت (2026) — أي إعداد محفوظ يستخدمها يُرحَّل تلقائيًا للبديل.
+const RETIRED_GROQ_MODELS = new Set([
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+]);
+
 // الافتراضي مزوّد بطبقة مجانية (Groq) — يكفي المستخدم إنشاء مفتاح مجاني دون بطاقة.
 // بدون مفتاح يعمل المساعد المحلي تلقائيًا.
 export const DEFAULT_AI: AiConfig = {
   baseUrl: "https://api.groq.com/openai/v1",
   apiKey: "",
-  model: "llama-3.3-70b-versatile",
+  model: "openai/gpt-oss-120b",
 };
 
 export interface AiConfig {
@@ -98,10 +104,15 @@ export function readAiConfig(): AiConfig {
     const raw = window.localStorage.getItem(KEY_AI);
     if (!raw) return DEFAULT_AI;
     const parsed = JSON.parse(raw) as Partial<AiConfig>;
+    const baseUrl = parsed.baseUrl?.trim() || DEFAULT_AI.baseUrl;
+    let model = parsed.model?.trim() || DEFAULT_AI.model;
+    if (/groq\.com/i.test(baseUrl) && RETIRED_GROQ_MODELS.has(model)) {
+      model = DEFAULT_AI.model;
+    }
     return {
-      baseUrl: parsed.baseUrl?.trim() || DEFAULT_AI.baseUrl,
+      baseUrl,
       apiKey: parsed.apiKey?.trim() || "",
-      model: parsed.model?.trim() || DEFAULT_AI.model,
+      model,
     };
   } catch {
     return DEFAULT_AI;

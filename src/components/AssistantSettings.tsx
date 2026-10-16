@@ -27,7 +27,7 @@ const PRESETS: AiPreset[] = [
     id: "groq",
     label: "Groq · Free",
     baseUrl: "https://api.groq.com/openai/v1",
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-120b",
     keysUrl: "https://console.groq.com/keys",
   },
   {
@@ -145,7 +145,7 @@ export function AssistantSettings() {
             id="ai-model"
             dir="ltr"
             value={cfg.model}
-            placeholder="llama-3.3-70b-versatile"
+            placeholder="openai/gpt-oss-120b"
             onChange={(e) => setCfg({ ...cfg, model: e.target.value })}
             className={field}
           />
