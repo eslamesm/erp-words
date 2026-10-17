@@ -366,3 +366,117 @@ export interface BusinessProcess {
   exercise?: ProcessExercise;
   quiz?: ProcessQuizQuestion[];
 }
+
+// ═══════════════ Phase 03: الإنجليزية المهنية (Professional English) ═══════════════
+
+// وحدة داخل قسم الإنجليزية المهنية (مثال: كتابة البريد المهني، الاجتماعات).
+export interface ProfessionalEnglishUnit {
+  id: string;
+  slug: string;
+  icon: string;
+  titleAr: string;
+  titleEn: string;
+  descAr: string;
+  descEn: string;
+  // "ready" = الوحدة متاحة، "planned" = قيد الإعداد (بطاقة "قريبًا" بدون رابط فعّال).
+  status: "ready" | "planned";
+}
+
+// أجزاء البريد المهني السبعة (البنية القياسية).
+export type EmailPart =
+  | "subject"
+  | "greeting"
+  | "opening"
+  | "body"
+  | "action"
+  | "closing"
+  | "signature";
+
+// أسلوب الكتابة: رسمي / محايد مهني / مهذّب لكن حاسم.
+export type EmailStyle = "formal" | "neutral" | "firm";
+
+// جزء من أجزاء البريد: النص بالإنجليزية والعربية + الغرض من هذا الجزء.
+export interface EmailBlock {
+  part: EmailPart;
+  en: string;
+  ar: string;
+  purposeAr: string;
+  purposeEn: string;
+}
+
+// تعبير مهني مع شرح سبب استخدامه ونمطه.
+export interface EmailExpression {
+  id: string;
+  en: string;
+  ar: string;
+  explainAr: string;
+  explainEn: string;
+  style: EmailStyle;
+  // ربط اختياري بمصطلح من WORDS (عرض فقط).
+  wordId?: string;
+}
+
+// تمرين إكمال الجملة (اختيار من متعدد).
+export interface EmailFillBlank {
+  id: string;
+  promptAr: string;
+  promptEn: string;
+  optionsAr: string[];
+  optionsEn: string[];
+  answerIndex: number;
+  explainAr?: string;
+  explainEn?: string;
+}
+
+// تمرين اختيار التعبير المناسب للموقف.
+export interface EmailChooseExpression {
+  id: string;
+  scenarioAr: string;
+  scenarioEn: string;
+  optionsAr: string[];
+  optionsEn: string[];
+  answerIndex: number;
+  explainAr?: string;
+  explainEn?: string;
+}
+
+// التمرين الموجّه (المستوى الثاني – Practice).
+export interface EmailGuidedPractice {
+  fillBlanks: EmailFillBlank[];
+  choose: EmailChooseExpression[];
+}
+
+// سؤال اختبار المعرفة (نفس بنية أسئلة العمليات — قابل لإعادة الاستخدام).
+export type EmailQuizQuestion = ProcessQuizQuestion;
+
+// درس بريد مهني كامل (وحدة كتابة البريد المهني – Phase 03).
+export interface BusinessEmailLesson {
+  id: string;
+  slug: string;
+  order: number;
+  icon: string;
+  titleAr: string;
+  titleEn: string;
+  level: Level;
+  // سياق العملية التجارية من Phase 02.
+  processId: string;
+  processLabelAr: string;
+  processLabelEn: string;
+  scenarioAr: string;
+  scenarioEn: string;
+  objectivesAr: string[];
+  objectivesEn: string[];
+  style: EmailStyle;
+  blocks: EmailBlock[];
+  expressions: EmailExpression[];
+  // مصطلحات من WORDS مرتبطة بالدرس (روابط فقط).
+  wordIds: string[];
+  guided: EmailGuidedPractice;
+  writingTaskAr: string;
+  writingTaskEn: string;
+  checklistAr: string[];
+  checklistEn: string[];
+  referenceAnswerAr: string;
+  referenceAnswerEn: string;
+  quiz: EmailQuizQuestion[];
+}

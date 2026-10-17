@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MODULES } from "@/data/modules";
 import { WORDS } from "@/data/words";
 import { ProcessCards } from "@/components/processes/ProcessCards";
+import { ProEngUnitCards } from "@/components/emails/ProEngUnitCards";
 import { isDue } from "@/lib/srs";
 import { useProgress } from "@/hooks/useProgress";
 import { Onboarding } from "@/components/Onboarding";
@@ -355,6 +356,22 @@ export default function HomePage() {
           </Link>
         </div>
         <ProcessCards />
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold">🌐 {t("proeng.homeTitle")}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("proeng.homeSubtitle")}</p>
+          </div>
+          <Link
+            href="/professional-english"
+            className="shrink-0 text-sm font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            {t("proeng.backToIndex")}
+          </Link>
+        </div>
+        <ProEngUnitCards />
       </section>
     </div>
   );
