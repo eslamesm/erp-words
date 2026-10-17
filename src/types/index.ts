@@ -243,3 +243,126 @@ export interface Conversation {
   level: Level;
   lines: ConversationLine[];
 }
+
+// ═══════════════ Phase 02: العمليات التجارية (Business Processes) ═══════════════
+
+// نتيجة/مسار بديل داخل الخطوة (اعتماد، رفض، إكمال جزئي، استثناء).
+export type ProcessPathOutcome = "normal" | "approved" | "rejected" | "partial" | "exception";
+
+export interface ProcessStepPath {
+  outcome: ProcessPathOutcome;
+  labelAr: string;
+  labelEn: string;
+  descAr: string;
+  descEn: string;
+}
+
+// خطوة واحدة داخل العملية (Process Step).
+export interface ProcessStep {
+  id: string;
+  order: number;
+  titleAr: string;
+  titleEn: string;
+  descAr: string;
+  descEn: string;
+  moduleId: ModuleId;
+  subModuleId?: string;
+  // الدور المسؤول عن الخطوة (Template v1.0).
+  roleAr?: string;
+  roleEn?: string;
+  // المدخل المطلوب لتنفيذ الخطوة.
+  inputAr?: string;
+  inputEn?: string;
+  // المخرج الناتج عن الخطوة.
+  outputAr?: string;
+  outputEn?: string;
+  // القرار أو المسار البديل الرئيسي في الخطوة.
+  decisionAr?: string;
+  decisionEn?: string;
+  // مسارات فرعية: اعتماد/رفض/إكمال جزئي/استثناء.
+  paths?: ProcessStepPath[];
+  // الوظائف التجارية (Phase 01) المرتبطة بالخطوة.
+  businessFunctionIds?: string[];
+  // مصطلحات (term) مرتبطة بالخطوة من WORDS.
+  wordIds?: string[];
+  // مصطلحات واجهات (شاشة/حقل/زر/حالة) مرتبطة بالخطوة.
+  screenIds?: string[];
+}
+
+// سطر حوار بين موظفين داخل العملية.
+export interface ProcessDialogLine {
+  speaker: string;
+  en: string;
+  ar: string;
+}
+
+export interface ProcessConversation {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  participantsAr: string;
+  participantsEn: string;
+  lines: ProcessDialogLine[];
+  // مصطلحات من WORDS مرتبطة بالحوار (عرض فقط).
+  wordIds?: string[];
+}
+
+// مستند مستخدم في العملية.
+export interface ProcessDocumentItem {
+  id: string;
+  abbr: string;
+  nameAr: string;
+  nameEn: string;
+  descAr: string;
+  descEn: string;
+  // معرّف المصطلح المرتبط (إن وُجد) من WORDS.
+  wordId?: string;
+}
+
+// تمرين عملي.
+export interface ProcessExercise {
+  titleAr: string;
+  titleEn: string;
+  briefAr: string;
+  briefEn: string;
+  tasksAr: string[];
+  tasksEn: string[];
+  solutionAr: string;
+  solutionEn: string;
+}
+
+// سؤال اختبار فهم داخل الدرس.
+export interface ProcessQuizQuestion {
+  id: string;
+  promptAr: string;
+  promptEn: string;
+  optionsAr: string[];
+  optionsEn: string[];
+  answerIndex: number;
+  explainAr?: string;
+  explainEn?: string;
+  // ربط السؤال بمصطلح من WORDS (إن وُجد) — عرض فقط، دون أي منطق SRS جديد.
+  wordId?: string;
+}
+
+// العملية التجارية الكاملة (درس Phase 02).
+export interface BusinessProcess {
+  id: string;
+  slug: string;
+  icon: string;
+  acronym: string;
+  titleAr: string;
+  titleEn: string;
+  descAr: string;
+  descEn: string;
+  moduleIds: ModuleId[];
+  // "ready" = الدرس مكتمل ومتاح، "planned" = قيد الإعداد (بطاقة "قريبًا").
+  status: "ready" | "planned";
+  scenarioAr?: string;
+  scenarioEn?: string;
+  steps?: ProcessStep[];
+  conversations?: ProcessConversation[];
+  documents?: ProcessDocumentItem[];
+  exercise?: ProcessExercise;
+  quiz?: ProcessQuizQuestion[];
+}
