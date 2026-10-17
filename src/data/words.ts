@@ -1,8 +1,11 @@
 import type { Word } from "@/types";
 import { devWords } from "./devWords";
+import { screenWords } from "./screenWords";
+import { classifyWord } from "./wordClassification";
 
-// كل مقطع يمثل وحدة (module) من وحدات الـ ERP مع مفرداتها
-export const WORDS: Word[] = [
+// كل مقطع يمثل وحدة (module) من وحدات الـ ERP مع مفرداتها.
+// RAW_WORDS = بيانات خام؛ WORDS = بعد إثرائها بحقول التصنيف (category/subModuleId/status).
+const RAW_WORDS: Word[] = [
   // ───────────────────────── المالية والمحاسبة ─────────────────────────
   {
     id: "post",
@@ -1922,7 +1925,7 @@ export const WORDS: Word[] = [
 
   // ───────────────────────── الأصول الثابتة ─────────────────────────
   {
-    id: "depreciation",
+    id: "depreciation-assets",
     english: "Depreciation",
     arabic: "إهلاك",
     pronunciation: "/dɪˌpriːʃiˈeɪʃn/",
@@ -2107,7 +2110,7 @@ export const WORDS: Word[] = [
 
   // ───────────────────────── الخدمات والدعم ─────────────────────────
   {
-    id: "work-order",
+    id: "work-order-services",
     english: "Work Order",
     arabic: "أمر عمل",
     pronunciation: "/wɜːrk ˈɔːrdər/",
@@ -2137,7 +2140,7 @@ export const WORDS: Word[] = [
     tags: ["service"],
   },
   {
-    id: "sla",
+    id: "sla-services",
     english: "SLA (Service Level Agreement)",
     arabic: "اتفاقية مستوى الخدمة",
     pronunciation: "/ˌes el ˈeɪ/",
@@ -2167,7 +2170,7 @@ export const WORDS: Word[] = [
     tags: ["service"],
   },
   {
-    id: "downtime",
+    id: "downtime-services",
     english: "Downtime",
     arabic: "وقت التعطل",
     pronunciation: "/ˈdaʊntaɪm/",
@@ -2242,7 +2245,7 @@ export const WORDS: Word[] = [
     tags: ["service","inventory"],
   },
   {
-    id: "escalate",
+    id: "escalate-services",
     english: "Escalate",
     arabic: "تصعيد",
     pronunciation: "/ˈeskəleɪt/",
@@ -3887,8 +3890,11 @@ export const WORDS: Word[] = [
     synonyms: ["parts stock"],
     tags: ["service", "inventory"],
   },
+  ...screenWords,
   ...devWords,
 ];
+
+export const WORDS: Word[] = RAW_WORDS.map(classifyWord);
 
 export const wordsByModule = (moduleId: string) => WORDS.filter((w) => w.module === moduleId);
 

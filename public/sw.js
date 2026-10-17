@@ -1,5 +1,5 @@
 /* Service Worker: تحديث ذاتي + شبكة أولًا مع تخزين احتياطي للعمل دون اتصال */
-const VERSION = "mvblqk6a";
+const VERSION = "mvbqc7j0";
 const CACHE = `erp-vocab-${VERSION}`;
 const CORE = [
   "/",

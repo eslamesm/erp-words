@@ -246,7 +246,7 @@ export default function HomePage() {
           const masteredCount = words.filter((w) => (progress[w.id]?.lapses ?? 0) >= 3).length;
           const pct = words.length ? Math.round((masteredCount / words.length) * 100) : 0;
           return { m, words: words.length, mastered: masteredCount, pct };
-        });
+        }).filter((x) => x.words > 0);
         const totalWords = weights.reduce((s, x) => s + x.words, 0);
         const overall = totalWords ? Math.round((weights.reduce((s, x) => s + x.mastered, 0) / totalWords) * 100) : 0;
         return (
@@ -316,7 +316,7 @@ export default function HomePage() {
       <section>
         <h2 className="mb-4 text-xl font-bold">{t("home.modulesTitle")}</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {MODULES.map((m) => {
+          {MODULES.filter((m) => WORDS.some((w) => w.module === m.id)).map((m) => {
             const count = WORDS.filter((w) => w.module === m.id).length;
             return (
               <Link
