@@ -21,9 +21,9 @@ export const PRO_ENG_UNITS: ProfessionalEnglishUnit[] = [
     icon: "🗣️",
     titleAr: "الاجتماعات والمناقشات",
     titleEn: "Meetings & Discussions",
-    descAr: "إدارة الاجتماعات والمناقشات المهنية بالإنجليزية (قيد الإعداد).",
-    descEn: "Managing professional meetings and discussions in English (planned).",
-    status: "planned",
+    descAr: "إدارة الاجتماعات والمناقشات المهنية بالإنجليزية: الافتتاح، تناقل الكلمة، تحديث الحالة، الاتفاق والاعتراض، طلب التوضيح، أزرار الإجراءات وخلاصة المحضر.",
+    descEn: "Managing professional meetings and discussions in English: opening, turn-taking, status updates, agreement and disagreement, clarification, action items and minutes.",
+    status: "ready",
   },
   {
     id: "presentations-reports",

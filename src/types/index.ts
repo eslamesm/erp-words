@@ -480,3 +480,136 @@ export interface BusinessEmailLesson {
   referenceAnswerEn: string;
   quiz: EmailQuizQuestion[];
 }
+
+// ═══════════════ Phase 04: الاجتماعات والمناقشات (Meetings & Discussions) ═══════════════
+
+// مشارك في الاجتماع — اسم ودور محدّدان (3 مشاركين على الأقل لكل درس).
+export interface MeetingParticipant {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  roleAr: string;
+  roleEn: string;
+}
+
+// سطر واحد من حوار الاجتماع: المتحدث معرّف بـ id من المشاركين.
+export interface MeetingLine {
+  speaker: string;
+  en: string;
+  ar: string;
+}
+
+// حوار الاجتماع الكامل (أسطر متعددة + مصطلحات مرتبطة اختيارية).
+export interface MeetingDialogue {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  lines: MeetingLine[];
+  wordIds?: string[];
+}
+
+// الوظيفة التواصلية للتعبير داخل الاجتماع.
+export type MeetingFunction =
+  | "opening"
+  | "turn-taking"
+  | "update"
+  | "agree"
+  | "disagree"
+  | "clarify"
+  | "action"
+  | "closing";
+
+// تعبير مهني للاجتماع مع شرح "متى" و"لماذا" يُستخدم.
+export interface MeetingExpression {
+  id: string;
+  en: string;
+  ar: string;
+  whenAr: string;
+  whenEn: string;
+  whyAr: string;
+  whyEn: string;
+  function: MeetingFunction;
+  wordId?: string;
+}
+
+// عبارة نطق قصيرة (تُستخدم في قسم التعبيرات وتدريب النطق).
+export interface SpeakingPhrase {
+  id: string;
+  en: string;
+  ar: string;
+  tipAr: string;
+  tipEn: string;
+}
+
+// سؤال اختيار من متعدد ببنية مستقلة (يُستخدم في الفهم والتوجيه) — غير مرتبط بأي نوع من أنواع البريد.
+export interface MeetingMcq {
+  id: string;
+  promptAr: string;
+  promptEn: string;
+  optionsAr: string[];
+  optionsEn: string[];
+  answerIndex: number;
+  explainAr: string;
+  explainEn: string;
+}
+
+// اختيار رد مناسب في موقف اجتماعي (الموقف + الخيارات + التفسير).
+export interface MeetingResponse {
+  id: string;
+  situationAr: string;
+  situationEn: string;
+  optionsAr: string[];
+  optionsEn: string[];
+  answerIndex: number;
+  explainAr: string;
+  explainEn: string;
+}
+
+// عنصر قابل للترتيب (خطوة اجتماع أو بند إجراءات) — الترتيب الافتراضي = ترتيب المصفوفة.
+export interface MeetingOrderItem {
+  id: string;
+  labelAr: string;
+  labelEn: string;
+}
+
+// التمرين الموجّه (المستوى الثاني – تدريب).
+export interface MeetingGuidedPractice {
+  fillBlanks: MeetingMcq[];
+  responses: MeetingResponse[];
+  order: MeetingOrderItem[];
+}
+
+// درس اجتماع مهني كامل (وحدة الاجتماعات والمناقشات – Phase 04).
+export interface MeetingLesson {
+  id: string;
+  slug: string;
+  order: number;
+  icon: string;
+  titleAr: string;
+  titleEn: string;
+  level: Level;
+  // سياق العملية التجارية (نفس معرّفات Phase 02).
+  processId: string;
+  processLabelAr: string;
+  processLabelEn: string;
+  scenarioAr: string;
+  scenarioEn: string;
+  objectivesAr: string[];
+  objectivesEn: string[];
+  participants: MeetingParticipant[];
+  dialogue: MeetingDialogue;
+  expressions: MeetingExpression[];
+  speaking: SpeakingPhrase[];
+  // مصطلحات من WORDS مرتبطة بالدرس (روابط فقط).
+  wordIds: string[];
+  comprehension: MeetingMcq[];
+  guided: MeetingGuidedPractice;
+  challengeTaskAr: string;
+  challengeTaskEn: string;
+  checklistAr: string[];
+  checklistEn: string[];
+  referenceAnswerAr: string;
+  referenceAnswerEn: string;
+  // نفس بنية أسئلة العمليات — يُعرض عبر ProcessQuiz.
+  quiz: ProcessQuizQuestion[];
+}
