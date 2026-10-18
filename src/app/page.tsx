@@ -6,12 +6,14 @@ import { MODULES } from "@/data/modules";
 import { WORDS } from "@/data/words";
 import { ProcessCards } from "@/components/processes/ProcessCards";
 import { ProEngUnitCards } from "@/components/emails/ProEngUnitCards";
+import { JobPathCards } from "@/components/jobs/JobPathCards";
 import { isDue } from "@/lib/srs";
 import { useProgress } from "@/hooks/useProgress";
 import { Onboarding } from "@/components/Onboarding";
 import { HomeScreen } from "@/components/ui/HomeScreen";
 import { gamificationLevel, MOTIVATIONAL, MOTIVATIONAL_EN, PLAN_META, reviewsToday } from "@/lib/plan";
 import { useT } from "@/hooks/useT";
+import { READY_JOB_PATHS } from "@/data/jobPaths";
 
 const FEATURE_HREF: Record<string, string> = {
   smart: "/assistant",
@@ -372,6 +374,22 @@ export default function HomePage() {
           </Link>
         </div>
         <ProEngUnitCards />
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold">💼 {t("job.title")}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("job.subtitle")}</p>
+          </div>
+          <Link
+            href="/job-based-learning"
+            className="shrink-0 text-sm font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            {t("job.backToPaths")}
+          </Link>
+        </div>
+        <JobPathCards paths={READY_JOB_PATHS} />
       </section>
     </div>
   );
