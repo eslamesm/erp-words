@@ -275,9 +275,9 @@ function countAnswerOptionItems(): number {
 describe("Phase 05.6 — answer positions (Task 1)", () => {
   const items = collectAnswerOptionItems();
 
-  it("covers all 318 answer-option items across the three paths", () => {
-    // 3 paths × 106: pilot + accountant + procurement-specialist.
-    expect(items.length).toBe(318);
+  it("covers all 424 answer-option items across the four paths", () => {
+    // 4 paths × 106: pilot + accountant + procurement-specialist + manufacturing-planner.
+    expect(items.length).toBe(424);
     // Self-check against the live structure so a new path cannot slip in silently.
     expect(items.length).toBe(countAnswerOptionItems());
   });
@@ -571,10 +571,10 @@ describe("Phase 05.6 — planned-path visibility (Task 6)", () => {
   });
 
   it("pins the exact planned-path slug set", () => {
-    // Exactly one planned path is shipped in Phase 07: procurement-specialist.
-    // Assert the SET (not just a count) so no second unexpected planned path is accepted.
+    // Two planned paths ship in Phase 07/08: procurement-specialist and manufacturing-planner.
+    // Assert the SET (not just a count) so no unexpected planned path is accepted.
     const planned = JOB_PATHS.filter((p) => p.status === "planned").map((p) => p.slug).sort();
-    expect(planned).toEqual(["procurement-specialist"]);
+    expect(planned).toEqual(["manufacturing-planner", "procurement-specialist"]);
   });
 
   it("pins the exact ready-path slug set", () => {
@@ -1615,6 +1615,605 @@ describe("Phase 07 — procurement-specialist business guardrails", () => {
       "finance-ap-register-bill",
     ]);
     expect(l.refs.businessFunctionIds ?? []).not.toContain("finance-ap-pay-vendor");
+  });
+});
+
+describe("Phase 08 — manufacturing-planner path shape", () => {
+  const path = jobPathBySlug("manufacturing-planner")!;
+
+  it("exists with the expected identity and metadata", () => {
+    expect(path).toBeTruthy();
+    expect(path.id).toBe("job-manufacturing-planner");
+    expect(path.slug).toBe("manufacturing-planner");
+    expect(path.status).toBe("planned");
+    expect(path.level).toBe("B2");
+    expect(path.titleEn).toBe("ERP Manufacturing Planner");
+    expect(path.icon).toBeTruthy();
+    expect(path.summaryAr && path.summaryEn, "summary").toBeTruthy();
+    expect(path.descAr && path.descEn, "desc").toBeTruthy();
+    expect(path.learningObjectivesAr.length).toBeGreaterThan(0);
+    expect(path.learningObjectivesAr.length).toBe(path.learningObjectivesEn.length);
+  });
+
+  it("does not link to a career path (no manufacturing career path exists)", () => {
+    expect(path.careerPathId).toBeUndefined();
+  });
+
+  it("has exactly 12 lessons ordered 1..12 with the approved slugs", () => {
+    expect(path.lessons.length).toBe(12);
+    path.lessons.forEach((l, i) => {
+      expect(l.order, l.id).toBe(i + 1);
+      expect(l.level, l.id).toBe("B2");
+    });
+    expect(path.lessons.map((l) => l.slug)).toEqual([
+      "understanding-manufacturing-planner-role",
+      "reviewing-production-demand",
+      "understanding-bills-of-materials-and-requirements",
+      "checking-material-availability",
+      "planning-manufacturing-orders",
+      "scheduling-work-centers-and-operations",
+      "managing-production-priorities",
+      "coordinating-material-shortages-with-procurement",
+      "monitoring-work-order-progress",
+      "handling-production-delays-and-planning-changes",
+      "reviewing-production-performance-and-variances",
+      "communicating-production-plans-and-escalating-risks",
+    ]);
+  });
+
+  it("remains planned and is not exposed as a ready path", () => {
+    expect(path.status).toBe("planned");
+    expect(READY_JOB_PATHS.some((p) => p.slug === "manufacturing-planner")).toBe(false);
+  });
+});
+
+describe("Phase 08 — manufacturing-planner lesson refs", () => {
+  const path = jobPathBySlug("manufacturing-planner")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+
+  // Approved reference map (Phase 08.1). Pinned so a drift of a ref is caught.
+  const EXPECTED_REFS: Record<
+    string,
+    {
+      processIds?: string[];
+      subModuleIds?: string[];
+      businessFunctionIds?: string[];
+      wordIds?: string[];
+      screenIds?: string[];
+      emailLessonSlugs?: string[];
+      meetingLessonSlugs?: string[];
+    }
+  > = {
+    "understanding-manufacturing-planner-role": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-planning", "manufacturing-orders"],
+      wordIds: ["work-order", "mrp", "capacity"],
+      meetingLessonSlugs: ["introducing-yourself-role"],
+    },
+    "reviewing-production-demand": {
+      processIds: ["p2produce"],
+      subModuleIds: ["planning-demand-planning", "planning-forecasting", "planning-master-schedule"],
+      wordIds: ["forecast", "lead-time"],
+      screenIds: ["scr-dashboard", "scr-report-center"],
+    },
+    "understanding-bills-of-materials-and-requirements": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-bom", "manufacturing-product-structure", "manufacturing-mrp"],
+      businessFunctionIds: ["manufacturing-bom-define"],
+      wordIds: ["bom", "mrp"],
+      screenIds: ["scr-bill-of-materials", "scr-item-master"],
+    },
+    "checking-material-availability": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-mrp", "inventory-on-hand", "inventory-products"],
+      wordIds: ["mrp", "bom", "lead-time", "min-max", "safety-stock", "reorder-point", "sku", "lot-number"],
+      screenIds: ["scr-item-master"],
+    },
+    "planning-manufacturing-orders": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-orders", "manufacturing-planning"],
+      businessFunctionIds: ["manufacturing-orders-create"],
+      wordIds: ["work-order", "mrp"],
+      screenIds: ["scr-production-order"],
+    },
+    "scheduling-work-centers-and-operations": {
+      processIds: ["p2produce"],
+      subModuleIds: [
+        "manufacturing-work-centers",
+        "manufacturing-routing",
+        "planning-scheduling",
+        "planning-capacity",
+        "planning-master-schedule",
+      ],
+      wordIds: ["routing", "operation", "capacity", "bottleneck", "batch-size", "production-line"],
+    },
+    "managing-production-priorities": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-planning", "manufacturing-orders"],
+      wordIds: ["backorder", "batch", "operation", "work-order"],
+      screenIds: ["scr-production-order"],
+      meetingLessonSlugs: ["problems-action-items"],
+    },
+    "coordinating-material-shortages-with-procurement": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-mrp", "inventory-on-hand", "planning-supply-planning"],
+      wordIds: ["escalate", "lead-time", "safety-stock", "risk"],
+      emailLessonSlugs: ["supplier-follow-up"],
+      meetingLessonSlugs: ["problems-action-items"],
+    },
+    "monitoring-work-order-progress": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-work-orders", "manufacturing-orders"],
+      businessFunctionIds: ["manufacturing-orders-produce"],
+      wordIds: ["work-order", "operation", "yield"],
+      screenIds: ["scr-work-order"],
+      meetingLessonSlugs: ["summarizing-minutes"],
+    },
+    "handling-production-delays-and-planning-changes": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-orders", "manufacturing-planning"],
+      wordIds: ["lead-time", "backorder", "escalate", "risk"],
+      screenIds: ["scr-production-order"],
+      emailLessonSlugs: ["production-delay-notification"],
+      meetingLessonSlugs: ["problems-action-items"],
+    },
+    "reviewing-production-performance-and-variances": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-costing", "manufacturing-scrap", "quality-reporting"],
+      wordIds: ["yield", "scrap", "downtime", "oee", "bottleneck"],
+      screenIds: ["scr-report-center"],
+      meetingLessonSlugs: ["giving-erp-project-updates"],
+    },
+    "communicating-production-plans-and-escalating-risks": {
+      processIds: ["p2produce"],
+      subModuleIds: ["manufacturing-planning", "manufacturing-orders"],
+      wordIds: ["escalate", "escalation-matrix", "risk", "capacity"],
+      emailLessonSlugs: ["issue-escalation"],
+      meetingLessonSlugs: ["problems-action-items", "summarizing-minutes"],
+    },
+  };
+
+  it("covers all 12 lessons", () => {
+    expect([...bySlug.keys()].sort()).toEqual(Object.keys(EXPECTED_REFS).sort());
+  });
+
+  it("matches the approved reference map exactly", () => {
+    for (const [slug, expected] of Object.entries(EXPECTED_REFS)) {
+      const refs = bySlug.get(slug)!.refs;
+      expect(refs.processIds ?? [], `${slug} processIds`).toEqual(expected.processIds ?? []);
+      expect(refs.subModuleIds ?? [], `${slug} subModuleIds`).toEqual(expected.subModuleIds ?? []);
+      expect(refs.businessFunctionIds ?? [], `${slug} businessFunctionIds`).toEqual(
+        expected.businessFunctionIds ?? []
+      );
+      expect(refs.wordIds ?? [], `${slug} wordIds`).toEqual(expected.wordIds ?? []);
+      expect(refs.screenIds ?? [], `${slug} screenIds`).toEqual(expected.screenIds ?? []);
+      expect(refs.emailLessonSlugs ?? [], `${slug} emailLessonSlugs`).toEqual(
+        expected.emailLessonSlugs ?? []
+      );
+      expect(refs.meetingLessonSlugs ?? [], `${slug} meetingLessonSlugs`).toEqual(
+        expected.meetingLessonSlugs ?? []
+      );
+    }
+  });
+
+  it("resolves every reference against the existing content", () => {
+    for (const l of path.lessons) {
+      const refs = l.refs;
+      for (const id of refs.processIds ?? []) {
+        expect(processById(id), `${l.slug} → process ${id}`).toBeTruthy();
+      }
+      for (const id of refs.subModuleIds ?? []) {
+        expect(SUB_MODULE_ID_SET.has(id), `${l.slug} → subModule ${id}`).toBe(true);
+      }
+      for (const id of refs.businessFunctionIds ?? []) {
+        expect(BUSINESS_FUNCTION_ID_SET.has(id), `${l.slug} → businessFunction ${id}`).toBe(true);
+      }
+      for (const id of [...(refs.wordIds ?? []), ...(refs.screenIds ?? [])]) {
+        expect(wordById(id), `${l.slug} → word ${id}`).toBeTruthy();
+      }
+      for (const slug of refs.emailLessonSlugs ?? []) {
+        expect(emailBySlug(slug), `${l.slug} → email ${slug}`).toBeTruthy();
+      }
+      for (const slug of refs.meetingLessonSlugs ?? []) {
+        expect(meetingBySlug(slug), `${l.slug} → meeting ${slug}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("only links quiz questions to existing words", () => {
+    const quiz = [
+      ...path.lessons.flatMap((l) => l.quiz),
+      ...path.lessons.flatMap((l) => l.practice.mcqs ?? []),
+      ...path.assessment.quiz,
+    ];
+    for (const q of quiz) {
+      if (q.wordId) {
+        expect(wordById(q.wordId), `${q.id} → word ${q.wordId}`).toBeTruthy();
+      }
+    }
+  });
+});
+
+describe("Phase 08 — manufacturing-planner practice shape", () => {
+  const path = jobPathBySlug("manufacturing-planner")!;
+
+  it("gives every lesson 2 MCQs, 1 response, a 5-step ordering and 2 phrases", () => {
+    for (const l of path.lessons) {
+      expect(l.practice.mcqs?.length, `${l.id} mcqs`).toBe(2);
+      expect(l.practice.responses?.length, `${l.id} responses`).toBe(1);
+      expect(l.practice.order?.length, `${l.id} order`).toBe(5);
+      expect(l.practice.phrases?.length, `${l.id} phrases`).toBe(2);
+    }
+  });
+
+  it("gives every lesson a 5-question quiz with complete bilingual options", () => {
+    for (const l of path.lessons) {
+      expect(l.quiz.length, `${l.id} quiz`).toBe(5);
+      for (const q of l.quiz) {
+        expect(q.promptAr && q.promptEn, q.id).toBeTruthy();
+        expect(q.optionsAr.length, q.id).toBe(q.optionsEn.length);
+        expect(q.optionsAr.length, q.id).toBeGreaterThan(1);
+        expect(q.answerIndex, q.id).toBeGreaterThanOrEqual(0);
+        expect(q.answerIndex, q.id).toBeLessThan(q.optionsAr.length);
+      }
+    }
+  });
+});
+
+describe("Phase 08 — manufacturing-planner assessment coverage", () => {
+  const path = jobPathBySlug("manufacturing-planner")!;
+  const assessment = path.assessment;
+
+  // Approved coverage map: 8 MCQs sample L2–L6, L8, L9, L11; the 2 written
+  // responses cover L8 and L10; the 3 speaking phrases cover L1, L7 and L12.
+  const LESSON_BY_QUESTION: Record<string, number> = {
+    "ja-mp-assess-q1": 2,
+    "ja-mp-assess-q2": 3,
+    "ja-mp-assess-q3": 4,
+    "ja-mp-assess-q4": 5,
+    "ja-mp-assess-q5": 6,
+    "ja-mp-assess-q6": 8,
+    "ja-mp-assess-q7": 9,
+    "ja-mp-assess-q8": 11,
+  };
+
+  it("has 8 MCQs covering the approved lessons exactly once", () => {
+    const ids = assessment.quiz.map((q) => q.id).sort();
+    expect(ids).toEqual(Object.keys(LESSON_BY_QUESTION).sort());
+    const lessons = Object.values(LESSON_BY_QUESTION);
+    expect(new Set(lessons).size).toBe(lessons.length);
+    for (const n of lessons) {
+      expect(n).toBeGreaterThanOrEqual(1);
+      expect(n).toBeLessThanOrEqual(11);
+    }
+  });
+
+  it("has 2 written responses and 3 speaking phrases (13 activities total)", () => {
+    expect(assessment.quiz.length).toBe(8);
+    expect((assessment.responses ?? []).length).toBe(2);
+    expect((assessment.speaking ?? []).length).toBe(3);
+    expect(
+      assessment.quiz.length + (assessment.responses ?? []).length + (assessment.speaking ?? []).length
+    ).toBe(13);
+  });
+
+  it("covers the shortage, delay and escalation lessons through the written responses", () => {
+    expect((assessment.responses ?? []).map((r) => r.id).sort()).toEqual(
+      ["ja-mp-assess-rs1", "ja-mp-assess-rs2"].sort()
+    );
+  });
+
+  it("covers the role, priority and communication lessons through the speaking phrases", () => {
+    expect((assessment.speaking ?? []).map((s) => s.id).sort()).toEqual(
+      ["ja-mp-assess-sp1", "ja-mp-assess-sp2", "ja-mp-assess-sp3"].sort()
+    );
+  });
+
+  it("does not support or declare an assessment Ordering activity", () => {
+    // The assessment schema has no ordering field; guard against a future addition
+    // that the UI cannot render.
+    expect("order" in assessment).toBe(false);
+    expect((assessment as { order?: unknown }).order).toBeUndefined();
+  });
+
+  it("does not repeat the same correct answer text within the MCQs", () => {
+    const answers = assessment.quiz.map((q) => q.optionsEn[q.answerIndex]);
+    expect(new Set(answers).size).toBe(answers.length);
+  });
+});
+
+describe("Phase 08 — manufacturing-planner assessment semantic answer keys", () => {
+  const path = jobPathBySlug("manufacturing-planner")!;
+  const assessment = path.assessment;
+  const byId = new Map(assessment.quiz.map((q) => [q.id, q]));
+
+  // Semantic answer-key fixture: the exact answer text each question must resolve to,
+  // in both languages. Pinning the TEXT (not just the index) means a drift of answerIndex,
+  // an option reorder, or a wrong option will fail even if the index looks "in bounds".
+  const ANSWER_KEY: Record<string, { en: string; ar: string; lesson: string }> = {
+    "ja-mp-assess-q1": {
+      en: "Determining what must be produced in the coming period.",
+      ar: "تحديد ما يجب إنتاجه في الفترة القادمة.",
+      lesson: "L2 reviewing production demand",
+    },
+    "ja-mp-assess-q2": {
+      en: "Turning the demand for a product into component requirements whose availability can be checked.",
+      ar: "تحويل الطلب على المنتج إلى متطلبات مكوّنات يمكن التحقق من توافرها.",
+      lesson: "L3 understanding bills of materials and requirements",
+    },
+    "ja-mp-assess-q3": {
+      en: "Comparing required quantities with those on hand to identify shortages.",
+      ar: "مقارنة الكميات المطلوبة بالمتوفّرة لتحديد النقص.",
+      lesson: "L4 checking material availability",
+    },
+    "ja-mp-assess-q4": {
+      en: "Documenting what must be produced, its quantity and dates so it is ready for scheduling and execution.",
+      ar: "توثيق ما يجب إنتاجه وكميته وتواريخه ليصبح جاهزًا للجدولة والتنفيذ.",
+      lesson: "L5 planning manufacturing orders",
+    },
+    "ja-mp-assess-q5": {
+      en: "Time-ordering the operations on the work centers and balancing the load with capacity.",
+      ar: "ترتيب العمليات زمنيًا على مراكز العمل وموازنة الحمل مع الطاقة.",
+      lesson: "L6 scheduling work centers and operations",
+    },
+    "ja-mp-assess-q6": {
+      en: "Identifying and documenting the shortage and coordinating the need with procurement without owning purchasing.",
+      ar: "تحديد النقص وتوثيقه وتنسيق الحاجة مع المشتريات دون تملّك الشراء.",
+      lesson: "L8 coordinating material shortages with procurement",
+    },
+    "ja-mp-assess-q7": {
+      en: "Comparing work done with work remaining and identifying deviation from the schedule.",
+      ar: "مقارنة العمل المنجز بالمتبقّي وتحديد الانحراف عن الجدول.",
+      lesson: "L9 monitoring work order progress",
+    },
+    "ja-mp-assess-q8": {
+      en: "Scrap, downtime and the efficiency metric.",
+      ar: "الهوالك والتوقّف ومؤشر الكفاءة.",
+      lesson: "L11 reviewing production performance and variances",
+    },
+  };
+
+  it("covers the eight assessment questions exactly", () => {
+    expect([...byId.keys()].sort()).toEqual(Object.keys(ANSWER_KEY).sort());
+  });
+
+  it("resolves every answerIndex to the intended English answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.answerIndex, `${id} bounds`).toBeGreaterThanOrEqual(0);
+      expect(q.answerIndex, `${id} bounds`).toBeLessThan(q.optionsEn.length);
+      expect(q.optionsEn[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.en);
+    }
+  });
+
+  it("resolves every answerIndex to the intended Arabic answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.optionsAr[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.ar);
+    }
+  });
+
+  it("keeps every option distinct in both languages", () => {
+    for (const q of assessment.quiz) {
+      expect(q.optionsAr.length, `${q.id} length`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsEn).size, `${q.id} en distinct`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsAr).size, `${q.id} ar distinct`).toBe(q.optionsAr.length);
+    }
+  });
+
+  it("keeps explanations non-empty and in the matching language", () => {
+    const ARABIC_RE = /[\u0600-\u06FF]/;
+    for (const q of assessment.quiz) {
+      const explainEn = q.explainEn ?? "";
+      const explainAr = q.explainAr ?? "";
+      expect(explainEn.length, `${q.id} explainEn`).toBeGreaterThan(0);
+      expect(explainAr.length, `${q.id} explainAr`).toBeGreaterThan(0);
+      expect(ARABIC_RE.test(explainAr), `${q.id} explainAr is Arabic`).toBe(true);
+      expect(ARABIC_RE.test(explainEn), `${q.id} explainEn is not Arabic`).toBe(false);
+    }
+  });
+
+  it("keeps the written responses bilingual and well-formed", () => {
+    for (const r of assessment.responses ?? []) {
+      expect(r.situationAr && r.situationEn, r.id).toBeTruthy();
+      expect(r.optionsAr.length, r.id).toBe(r.optionsEn.length);
+      expect(r.answerIndex, r.id).toBeGreaterThanOrEqual(0);
+      expect(r.answerIndex, r.id).toBeLessThan(r.optionsAr.length);
+    }
+  });
+
+  it("keeps the speaking phrases bilingual with tips", () => {
+    for (const s of assessment.speaking ?? []) {
+      expect(s.en && s.ar, s.id).toBeTruthy();
+      expect(s.tipAr && s.tipEn, s.id).toBeTruthy();
+    }
+  });
+});
+
+describe("Phase 08 — manufacturing-planner business guardrails", () => {
+  const path = jobPathBySlug("manufacturing-planner")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+
+  // Teaching content only: scenario + objectives + explanations + prompts (NOT distractor
+  // options). Distractors intentionally phrase the *wrong* claims to be rejected, so they
+  // must not be scanned for forbidden wording.
+  const teachingAllFor = (slug: string): string => {
+    const l = bySlug.get(slug)!;
+    return [
+      l.titleEn,
+      l.scenarioEn,
+      l.titleAr,
+      l.scenarioAr,
+      ...(l.objectivesEn ?? []),
+      ...(l.objectivesAr ?? []),
+      ...(l.practice.mcqs ?? []).flatMap((q) => [q.promptEn, q.explainEn ?? "", q.promptAr, q.explainAr ?? ""]),
+      ...(l.practice.responses ?? []).flatMap((r) => [
+        r.situationEn,
+        r.explainEn ?? "",
+        r.situationAr,
+        r.explainAr ?? "",
+      ]),
+      ...l.quiz.flatMap((q) => [q.promptEn, q.explainEn ?? "", q.promptAr, q.explainAr ?? ""]),
+    ]
+      .join(" ")
+      .toLowerCase();
+  };
+
+  const correctEnFor = (slug: string): string => {
+    const l = bySlug.get(slug)!;
+    const picks = [...(l.practice.mcqs ?? []), ...(l.practice.responses ?? []), ...l.quiz].map(
+      (q) => q.optionsEn[q.answerIndex]
+    );
+    return picks.join(" ").toLowerCase();
+  };
+
+  it("keeps the whole path on the plan-to-produce process only", () => {
+    for (const l of path.lessons) {
+      expect(l.refs.processIds ?? [], l.id).toEqual(["p2produce"]);
+    }
+  });
+
+  it("never references a forbidden screen, routing or capacity word as a dedicated feature", () => {
+    const FORBIDDEN_SCREENS = [
+      "scr-mrp",
+      "scr-routing",
+      "scr-work-center",
+      "scr-capacity",
+      "scr-shop-floor",
+    ];
+    for (const l of path.lessons) {
+      for (const id of l.refs.screenIds ?? []) {
+        expect(FORBIDDEN_SCREENS, `${l.id} → ${id}`).not.toContain(id);
+      }
+    }
+  });
+
+  it("never claims an unsupported scheduling, capacity, costing, scrap or quality business function", () => {
+    const allowed = new Set([
+      "manufacturing-bom-define",
+      "manufacturing-orders-create",
+      "manufacturing-orders-produce",
+    ]);
+    for (const l of path.lessons) {
+      for (const id of l.refs.businessFunctionIds ?? []) {
+        expect(allowed.has(id), `${l.id} → ${id} must be a supported manufacturing BF`).toBe(true);
+      }
+    }
+  });
+
+  it("L1 keeps the planner out of execution, stock, quality and costing", () => {
+    const teaching = teachingAllFor("understanding-manufacturing-planner-role");
+    expect(teaching).toContain("execution");
+    expect(teaching).toMatch(/quality/);
+    expect(teaching).toMatch(/accounting|cost/);
+  });
+
+  it("L2 reviews demand without claiming a dedicated demand-confirmation function", () => {
+    const teaching = teachingAllFor("reviewing-production-demand");
+    expect(teaching).toContain("forecast");
+    expect(teaching).toContain("confirmed");
+    // The review relies on the plan/forecast; no single confirm-demand function is claimed.
+    expect(teaching).not.toContain("confirm demand button");
+  });
+
+  it("L3 keeps BOM requirements distinct from stock", () => {
+    const teaching = teachingAllFor("understanding-bills-of-materials-and-requirements");
+    expect(teaching).toMatch(/component/);
+    expect(teaching).toMatch(/requirements?/);
+  });
+
+  it("L4 keeps required distinct from on-hand and does not own purchasing", () => {
+    const l = bySlug.get("checking-material-availability")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toContain("on-hand");
+    expect(teaching).toContain("required");
+    // The correct answers must frame the planner as documenting the shortage, not buying.
+    const correct = correctEnFor(l.slug);
+    expect(correct).toMatch(/without performing the purchasing|purchasing is procurement/);
+  });
+
+  it("L5 distinguishes a manufacturing order from a work order", () => {
+    const l = bySlug.get("planning-manufacturing-orders")!;
+    expect(l.refs.businessFunctionIds).toEqual(["manufacturing-orders-create"]);
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/manufacturing order/);
+    expect(teaching).toMatch(/work order/);
+  });
+
+  it("L6 schedules operations without claiming a dedicated routing/capacity screen", () => {
+    const l = bySlug.get("scheduling-work-centers-and-operations")!;
+    expect(l.refs.screenIds ?? []).toEqual([]);
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toContain("routing");
+    expect(teaching).toContain("capacity");
+    // Scheduling time-orders operations; it does not perform the physical operation.
+    expect(teaching).not.toContain("performs the operation on the shop floor");
+  });
+
+  it("L8 documents buying coordination but never owns purchasing", () => {
+    const l = bySlug.get("coordinating-material-shortages-with-procurement")!;
+    // Purchasing/negotiation belong to procurement, not the planner.
+    for (const lesson of path.lessons) {
+      for (const id of lesson.refs.businessFunctionIds ?? []) {
+        expect(id, `${lesson.id} must not claim a purchasing BF`).not.toMatch(
+          /purchasing|vendor-bills|purchase-order/
+        );
+      }
+    }
+    const correct = correctEnFor(l.slug);
+    expect(correct).toContain("negotiation and purchasing are your responsibility");
+  });
+
+  it("L10 does not assume an automated rescheduling or change-approval workflow", () => {
+    const l = bySlug.get("handling-production-delays-and-planning-changes")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toContain("reschedul");
+    expect(teaching).toMatch(/automated|workflow/);
+    for (const forbidden of [
+      "automated rescheduling workflow exists",
+      "rescheduling is automated",
+      "change approval workflow exists",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("L11 reviews operational metrics without owning costing or valuation", () => {
+    const l = bySlug.get("reviewing-production-performance-and-variances")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/scrap|downtime|efficiency/);
+    // The path must teach that costing and valuation are NOT the planner's: the
+    // wording "without owning costing" is the correct limitation, so scan for
+    // positive ownership claims instead of the substring "owning costing".
+    for (const forbidden of [
+      "planner owns costing",
+      "planner owns inventory valuation",
+      "the planner calculates the production cost",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("L12 frames escalation as communication, not an automated approval workflow", () => {
+    const l = bySlug.get("communicating-production-plans-and-escalating-risks")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toContain("escalat");
+    expect(teaching).toMatch(/communication|communicat/);
+    for (const forbidden of [
+      "escalation is an automated workflow",
+      "escalation approval workflow exists",
+      "escalation is automated",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("does not reuse plan-to-produce quiz text verbatim in the assessment", () => {
+    const p2p = processById("p2produce")!;
+    const source = p2p.quiz?.map((q) => q.promptEn.toLowerCase()) ?? [];
+    for (const q of path.assessment.quiz) {
+      expect(source, `${q.id} prompt must not be copied verbatim`).not.toContain(q.promptEn.toLowerCase());
+    }
   });
 });
 
