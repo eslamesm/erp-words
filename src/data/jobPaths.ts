@@ -7,6 +7,7 @@ import type {
   SpeakingPhrase,
 } from "@/types";
 import { erpAccountantPath } from "./jobPathsAccountant";
+import { procurementSpecialistPath } from "./jobPathsProcurement";
 
 // ═══════════════ Phase 05: التعلّم حسب الوظيفة (Job-Based Learning) ═══════════════
 // كل مسار وظيفي يجمع دروسًا مبنية على مهام العمل الحقيقية، ويربطها بمحتوى
@@ -3131,7 +3132,9 @@ const pilotPaths: JobPath[] = [
 
 // Phase 06: مسار محاسب ERP يُضاف بجانب المسار التجريبي (استشاري ERP الوظيفي).
 // الترتيب ثابت: الاستشاري أولًا ثم المحاسب.
-export const JOB_PATHS: JobPath[] = [...pilotPaths, erpAccountantPath];
+// Phase 07: مسار أخصائي المشتريات يُضاف ثالثًا بحالة "planned" (يُفعّل في مرحلة
+// الجاهزية لاحقًا)، ويبقى مخفيًا عن الواجهة عبر READY_JOB_PATHS.
+export const JOB_PATHS: JobPath[] = [...pilotPaths, erpAccountantPath, procurementSpecialistPath];
 
 // قرار الإتاحة (Phase 05.5 / 05.6): تُعرض المسارات ذات الحالة "ready" فقط في الواجهة
 // (الصفحة الرئيسية وصفحة المسارات) عبر READY_JOB_PATHS. تبقى المسارات "planned"
@@ -3142,6 +3145,14 @@ export const READY_JOB_PATHS: JobPath[] = JOB_PATHS.filter((p) => p.status === "
 
 export function jobPathBySlug(slug: string): JobPath | undefined {
   return JOB_PATHS.find((p) => p.slug === slug);
+}
+
+// حاجز الجاهزية (Phase 07.4.2): يُستخدم في صفحات المسار على الخادم للسماح بالوصول
+// للمسارات ذات الحالة "ready" فقط، ورفض المسارات "planned" والمجالات غير المعروفة
+// عبر notFound(). يبقى jobPathBySlug() متاحًا للبيانات والاختبارات الداخلية.
+export function readyJobPathBySlug(slug: string): JobPath | undefined {
+  const path = jobPathBySlug(slug);
+  return path && path.status === "ready" ? path : undefined;
 }
 
 export function jobLessonSlugs(job: JobPath): string[] {

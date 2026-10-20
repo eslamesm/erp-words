@@ -4,6 +4,7 @@ import {
   JOB_PATH_SLUGS,
   READY_JOB_PATHS,
   jobPathBySlug,
+  readyJobPathBySlug,
   jobLessonSlugs,
   jobLessonBySlug,
   type JobLesson,
@@ -235,10 +236,12 @@ describe("job path helpers (Phase 05)", () => {
 
 // ───────── Phase 05.6 regression guards ─────────
 
-// Every MCQ-like item in the curriculum (lesson mcqs, lesson quiz, assessment quiz,
-// lesson responses, assessment responses). Order in optionsAr mirrors optionsEn 1:1,
-// so a single answerIndex applies to both languages.
-function collectMcqItems() {
+// Every answer-option item in the curriculum: practice MCQs, lesson quiz questions,
+// assessment quiz questions, AND option-based written responses (practice + assessment).
+// Response activities share the question shape (optionsAr/optionsEn + answerIndex), so
+// they are collected here too. Order in optionsAr mirrors optionsEn 1:1, so a single
+// answerIndex applies to both languages.
+function collectAnswerOptionItems() {
   const items: { id: string; optionsAr: string[]; optionsEn: string[]; answerIndex: number }[] = [];
   for (const l of allLessons()) {
     for (const q of l.practice.mcqs ?? []) items.push(q);
@@ -252,11 +255,31 @@ function collectMcqItems() {
   return items;
 }
 
-describe("Phase 05.6 — answer positions (Task 1)", () => {
-  const items = collectMcqItems();
+// Derived count invariant: recompute the same collection straight from the live
+// JOB_PATHS structure. Keeps the reviewed literal honest and fails loudly (rather
+// than silently) if a future path is added without updating the total.
+function countAnswerOptionItems(): number {
+  let n = 0;
+  for (const p of JOB_PATHS) {
+    for (const l of p.lessons) {
+      n += (l.practice.mcqs ?? []).length;
+      n += (l.practice.responses ?? []).length;
+      n += l.quiz.length;
+    }
+    n += p.assessment.quiz.length;
+    n += (p.assessment.responses ?? []).length;
+  }
+  return n;
+}
 
-  it("covers all 212 MCQ items across the pilot and the accountant path", () => {
-    expect(items.length).toBe(212);
+describe("Phase 05.6 — answer positions (Task 1)", () => {
+  const items = collectAnswerOptionItems();
+
+  it("covers all 318 answer-option items across the three paths", () => {
+    // 3 paths × 106: pilot + accountant + procurement-specialist.
+    expect(items.length).toBe(318);
+    // Self-check against the live structure so a new path cannot slip in silently.
+    expect(items.length).toBe(countAnswerOptionItems());
   });
 
   it("keeps every answerIndex within bounds and options aligned across languages", () => {
@@ -547,10 +570,67 @@ describe("Phase 05.6 — planned-path visibility (Task 6)", () => {
     }
   });
 
-  it("does not ship placeholder planned paths in the release", () => {
-    // Phase 06 decision: both paths are shipped as "ready" and no placeholder path is added.
-    expect(JOB_PATHS.filter((p) => p.status === "planned").length).toBe(0);
-    expect(JOB_PATHS.length).toBe(READY_JOB_PATHS.length);
+  it("pins the exact planned-path slug set", () => {
+    // Exactly one planned path is shipped in Phase 07: procurement-specialist.
+    // Assert the SET (not just a count) so no second unexpected planned path is accepted.
+    const planned = JOB_PATHS.filter((p) => p.status === "planned").map((p) => p.slug).sort();
+    expect(planned).toEqual(["procurement-specialist"]);
+  });
+
+  it("pins the exact ready-path slug set", () => {
+    const ready = READY_JOB_PATHS.map((p) => p.slug).sort();
+    expect(ready).toEqual(["erp-accountant", "erp-functional-consultant"]);
+  });
+
+  it("keeps planned paths out of the shipped release", () => {
+    // The ready list is derived from status: total paths exceed the ready set by the
+    // planned ones, and every planned path stays hidden from READY_JOB_PATHS.
+    const planned = JOB_PATHS.filter((p) => p.status === "planned");
+    expect(JOB_PATHS.length).toBe(READY_JOB_PATHS.length + planned.length);
+    for (const p of planned) {
+      expect(READY_JOB_PATHS.some((r) => r.slug === p.slug), p.id).toBe(false);
+    }
+    // Procurement ships as planned and must not be reachable through the ready set.
+    expect(READY_JOB_PATHS.some((r) => r.slug === "procurement-specialist")).toBe(false);
+  });
+});
+
+describe("Phase 07.4.2 — readyJobPathBySlug readiness gate", () => {
+  it("resolves ready paths and reports their status as ready", () => {
+    const accountant = readyJobPathBySlug("erp-accountant");
+    const consultant = readyJobPathBySlug("erp-functional-consultant");
+    expect(accountant).toBeDefined();
+    expect(consultant).toBeDefined();
+    expect(accountant!.status).toBe("ready");
+    expect(consultant!.status).toBe("ready");
+  });
+
+  it("returns undefined for the planned procurement path", () => {
+    expect(readyJobPathBySlug("procurement-specialist")).toBeUndefined();
+    // The gate must not be what makes procurement invisible: it stays in JOB_PATHS.
+    expect(jobPathBySlug("procurement-specialist")).toBeDefined();
+    expect(jobPathBySlug("procurement-specialist")!.status).toBe("planned");
+  });
+
+  it("returns undefined for unknown slugs", () => {
+    expect(readyJobPathBySlug("does-not-exist")).toBeUndefined();
+    // Existing resolver behavior for unknown slugs is unchanged.
+    expect(jobPathBySlug("does-not-exist")).toBeUndefined();
+  });
+
+  it("preserves ready-path lesson data and planned-path structure", () => {
+    for (const p of READY_JOB_PATHS) {
+      const ready = readyJobPathBySlug(p.slug)!;
+      expect(ready.lessons.length, p.slug).toBe(p.lessons.length);
+      expect(jobLessonSlugs(ready)).toEqual(jobLessonSlugs(p));
+    }
+    const procurement = jobPathBySlug("procurement-specialist")!;
+    expect(procurement.lessons).toHaveLength(12);
+    const activityCount =
+      procurement.assessment.quiz.length +
+      (procurement.assessment.responses?.length ?? 0) +
+      (procurement.assessment.speaking?.length ?? 0);
+    expect(activityCount).toBe(13);
   });
 });
 
@@ -990,6 +1070,551 @@ describe("Phase 06 — erp-accountant ownership boundaries", () => {
     const tax = bySlug.get("managing-tax-compliance")!;
     expect(tax.refs.businessFunctionIds ?? []).toEqual([]);
     expect(tax.refs.processIds ?? []).toEqual([]);
+  });
+});
+
+// ═══════════════ Phase 07 — مسار أخصائي المشتريات (Procurement Specialist) ═══════════════
+
+describe("Phase 07 — procurement-specialist path shape", () => {
+  const path = jobPathBySlug("procurement-specialist")!;
+
+  it("exists with the expected identity and metadata", () => {
+    expect(path).toBeTruthy();
+    expect(path.id).toBe("job-procurement-specialist");
+    expect(path.slug).toBe("procurement-specialist");
+    expect(path.status).toBe("planned");
+    expect(path.level).toBe("B2");
+    expect(path.titleEn).toBe("Procurement Specialist");
+    expect(path.icon).toBeTruthy();
+    expect(path.summaryAr && path.summaryEn, "summary").toBeTruthy();
+    expect(path.descAr && path.descEn, "desc").toBeTruthy();
+    expect(path.learningObjectivesAr.length).toBeGreaterThan(0);
+    expect(path.learningObjectivesAr.length).toBe(path.learningObjectivesEn.length);
+  });
+
+  it("does not link to a career path (no procurement career path exists)", () => {
+    expect(path.careerPathId).toBeUndefined();
+  });
+
+  it("has exactly 12 lessons ordered 1..12 with the approved slugs", () => {
+    expect(path.lessons.length).toBe(12);
+    path.lessons.forEach((l, i) => {
+      expect(l.order, l.id).toBe(i + 1);
+      expect(l.level, l.id).toBe("B2");
+    });
+    expect(path.lessons.map((l) => l.slug)).toEqual([
+      "understanding-procurement-role",
+      "raising-purchase-requisitions",
+      "purchase-approval-workflows",
+      "supplier-sourcing-and-rfq",
+      "comparing-supplier-quotations",
+      "evaluating-and-selecting-vendors",
+      "creating-purchase-orders",
+      "managing-purchase-order-amendments",
+      "receiving-goods-and-handling-discrepancies",
+      "matching-vendor-invoices",
+      "procurement-reporting-and-spend",
+      "communicating-and-escalating-supplier-issues",
+    ]);
+  });
+
+  it("remains planned and is not exposed as a ready path", () => {
+    expect(path.status).toBe("planned");
+    expect(READY_JOB_PATHS.some((p) => p.slug === "procurement-specialist")).toBe(false);
+  });
+});
+
+describe("Phase 07 — procurement-specialist lesson refs", () => {
+  const path = jobPathBySlug("procurement-specialist")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+
+  // Approved reference map (Phase 07.0.1). Pinned so a drift of a ref is caught.
+  const EXPECTED_REFS: Record<
+    string,
+    {
+      processIds?: string[];
+      subModuleIds?: string[];
+      businessFunctionIds?: string[];
+      wordIds?: string[];
+      screenIds?: string[];
+      emailLessonSlugs?: string[];
+      meetingLessonSlugs?: string[];
+    }
+  > = {
+    "understanding-procurement-role": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-vendors"],
+      wordIds: ["procurement", "vendor", "approval"],
+      meetingLessonSlugs: ["introducing-yourself-role"],
+    },
+    "raising-purchase-requisitions": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-requisition"],
+      businessFunctionIds: ["purchasing-requisition-create"],
+      wordIds: ["purchase-request", "budget"],
+      screenIds: ["scr-purchase-requisition"],
+      meetingLessonSlugs: ["asking-for-clarification"],
+    },
+    "purchase-approval-workflows": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-orders"],
+      businessFunctionIds: ["purchasing-orders-approve"],
+      wordIds: ["approval", "budget", "purchase-order"],
+      screenIds: ["scr-purchase-order"],
+      meetingLessonSlugs: ["agreeing-disagreeing"],
+    },
+    "supplier-sourcing-and-rfq": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-rfq", "purchasing-vendors"],
+      wordIds: ["rfq", "vendor", "procurement", "source", "lead-time"],
+      emailLessonSlugs: ["supplier-follow-up"],
+    },
+    "comparing-supplier-quotations": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-vendor-comparison"],
+      wordIds: ["quotation", "rfq", "vendor", "price-negotiation"],
+    },
+    "evaluating-and-selecting-vendors": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-vendor-comparison", "purchasing-vendors"],
+      wordIds: ["vendor-rating", "vendor", "contract", "negotiation"],
+      meetingLessonSlugs: ["agreeing-disagreeing"],
+    },
+    "creating-purchase-orders": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-orders"],
+      businessFunctionIds: ["purchasing-orders-create"],
+      wordIds: ["purchase-order", "vendor", "budget"],
+      screenIds: ["scr-purchase-order"],
+    },
+    "managing-purchase-order-amendments": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-orders", "purchasing-agreements"],
+      businessFunctionIds: ["purchasing-orders-approve"],
+      wordIds: ["blanket-order", "open-po", "contract", "purchase-order", "approval"],
+      screenIds: ["scr-purchase-order"],
+      emailLessonSlugs: ["supplier-follow-up"],
+      meetingLessonSlugs: ["asking-for-clarification"],
+    },
+    "receiving-goods-and-handling-discrepancies": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-receipts"],
+      businessFunctionIds: ["purchasing-receipts-receive"],
+      wordIds: ["goods-receipt", "grn", "delivery-note", "purchase-order"],
+      screenIds: ["scr-goods-receipt"],
+      meetingLessonSlugs: ["problems-action-items"],
+    },
+    "matching-vendor-invoices": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-vendor-bills", "finance-ap"],
+      businessFunctionIds: ["purchasing-vendor-bills-register", "finance-ap-register-bill"],
+      wordIds: ["three-way-match", "purchase-order", "goods-receipt"],
+      emailLessonSlugs: ["invoice-discrepancy"],
+    },
+    "procurement-reporting-and-spend": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-reporting"],
+      wordIds: ["open-po", "budget", "procurement", "vendor-rating"],
+      meetingLessonSlugs: ["summarizing-minutes"],
+    },
+    "communicating-and-escalating-supplier-issues": {
+      processIds: ["p2p"],
+      subModuleIds: ["purchasing-vendors"],
+      wordIds: ["escalate", "approval", "follow-up", "negotiation"],
+      emailLessonSlugs: ["issue-escalation"],
+      meetingLessonSlugs: ["problems-action-items", "summarizing-minutes"],
+    },
+  };
+
+  it("covers all 12 lessons", () => {
+    expect([...bySlug.keys()].sort()).toEqual(Object.keys(EXPECTED_REFS).sort());
+  });
+
+  it("matches the approved reference map exactly", () => {
+    for (const [slug, expected] of Object.entries(EXPECTED_REFS)) {
+      const refs = bySlug.get(slug)!.refs;
+      expect(refs.processIds ?? [], `${slug} processIds`).toEqual(expected.processIds ?? []);
+      expect(refs.subModuleIds ?? [], `${slug} subModuleIds`).toEqual(expected.subModuleIds ?? []);
+      expect(refs.businessFunctionIds ?? [], `${slug} businessFunctionIds`).toEqual(
+        expected.businessFunctionIds ?? []
+      );
+      expect(refs.wordIds ?? [], `${slug} wordIds`).toEqual(expected.wordIds ?? []);
+      expect(refs.screenIds ?? [], `${slug} screenIds`).toEqual(expected.screenIds ?? []);
+      expect(refs.emailLessonSlugs ?? [], `${slug} emailLessonSlugs`).toEqual(
+        expected.emailLessonSlugs ?? []
+      );
+      expect(refs.meetingLessonSlugs ?? [], `${slug} meetingLessonSlugs`).toEqual(
+        expected.meetingLessonSlugs ?? []
+      );
+    }
+  });
+
+  it("resolves every reference against the existing content", () => {
+    for (const l of path.lessons) {
+      const refs = l.refs;
+      for (const id of refs.processIds ?? []) {
+        expect(processById(id), `${l.slug} → process ${id}`).toBeTruthy();
+      }
+      for (const id of refs.subModuleIds ?? []) {
+        expect(SUB_MODULE_ID_SET.has(id), `${l.slug} → subModule ${id}`).toBe(true);
+      }
+      for (const id of refs.businessFunctionIds ?? []) {
+        expect(BUSINESS_FUNCTION_ID_SET.has(id), `${l.slug} → businessFunction ${id}`).toBe(true);
+      }
+      for (const id of [...(refs.wordIds ?? []), ...(refs.screenIds ?? [])]) {
+        expect(wordById(id), `${l.slug} → word ${id}`).toBeTruthy();
+      }
+      for (const slug of refs.emailLessonSlugs ?? []) {
+        expect(emailBySlug(slug), `${l.slug} → email ${slug}`).toBeTruthy();
+      }
+      for (const slug of refs.meetingLessonSlugs ?? []) {
+        expect(meetingBySlug(slug), `${l.slug} → meeting ${slug}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("only links quiz questions to existing words", () => {
+    const quiz = [
+      ...path.lessons.flatMap((l) => l.quiz),
+      ...path.lessons.flatMap((l) => l.practice.mcqs ?? []),
+      ...path.assessment.quiz,
+    ];
+    for (const q of quiz) {
+      if (q.wordId) {
+        expect(wordById(q.wordId), `${q.id} → word ${q.wordId}`).toBeTruthy();
+      }
+    }
+  });
+});
+
+describe("Phase 07 — procurement-specialist practice shape", () => {
+  const path = jobPathBySlug("procurement-specialist")!;
+
+  it("gives every lesson 2 MCQs, 1 response, a 5-step ordering and 2 phrases", () => {
+    for (const l of path.lessons) {
+      expect(l.practice.mcqs?.length, `${l.id} mcqs`).toBe(2);
+      expect(l.practice.responses?.length, `${l.id} responses`).toBe(1);
+      expect(l.practice.order?.length, `${l.id} order`).toBe(5);
+      expect(l.practice.phrases?.length, `${l.id} phrases`).toBe(2);
+    }
+  });
+
+  it("gives every lesson a 5-question quiz with complete bilingual options", () => {
+    for (const l of path.lessons) {
+      expect(l.quiz.length, `${l.id} quiz`).toBe(5);
+      for (const q of l.quiz) {
+        expect(q.promptAr && q.promptEn, q.id).toBeTruthy();
+        expect(q.optionsAr.length, q.id).toBe(q.optionsEn.length);
+        expect(q.optionsAr.length, q.id).toBeGreaterThan(1);
+        expect(q.answerIndex, q.id).toBeGreaterThanOrEqual(0);
+        expect(q.answerIndex, q.id).toBeLessThan(q.optionsAr.length);
+      }
+    }
+  });
+});
+
+describe("Phase 07 — procurement-specialist assessment coverage", () => {
+  const path = jobPathBySlug("procurement-specialist")!;
+  const assessment = path.assessment;
+
+  // Approved coverage map: 8 MCQs sample L1–L8, the 2 written responses cover
+  // L9 and L12, and the 3 speaking phrases cover L10, L11 and L7+L12.
+  const LESSON_BY_QUESTION: Record<string, number> = {
+    "ja-pr-assess-q1": 1,
+    "ja-pr-assess-q2": 2,
+    "ja-pr-assess-q3": 3,
+    "ja-pr-assess-q4": 4,
+    "ja-pr-assess-q5": 5,
+    "ja-pr-assess-q6": 6,
+    "ja-pr-assess-q7": 7,
+    "ja-pr-assess-q8": 8,
+  };
+
+  it("has 8 MCQs covering lessons 1–8 exactly once", () => {
+    const ids = assessment.quiz.map((q) => q.id).sort();
+    expect(ids).toEqual(Object.keys(LESSON_BY_QUESTION).sort());
+    const lessons = Object.values(LESSON_BY_QUESTION);
+    expect(new Set(lessons).size).toBe(lessons.length);
+    for (const n of lessons) {
+      expect(n).toBeGreaterThanOrEqual(1);
+      expect(n).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it("has 2 written responses and 3 speaking phrases (13 activities total)", () => {
+    expect(assessment.quiz.length).toBe(8);
+    expect((assessment.responses ?? []).length).toBe(2);
+    expect((assessment.speaking ?? []).length).toBe(3);
+    expect(
+      assessment.quiz.length + (assessment.responses ?? []).length + (assessment.speaking ?? []).length
+    ).toBe(13);
+  });
+
+  it("covers lessons 9 and 12 through the written responses", () => {
+    expect((assessment.responses ?? []).map((r) => r.id).sort()).toEqual(
+      ["ja-pr-assess-rs1", "ja-pr-assess-rs2"].sort()
+    );
+  });
+
+  it("does not support or declare an assessment Ordering activity", () => {
+    // The assessment schema has no ordering field; guard against a future addition
+    // that the UI cannot render.
+    expect("order" in assessment).toBe(false);
+    expect((assessment as { order?: unknown }).order).toBeUndefined();
+  });
+
+  it("does not repeat the same correct answer text within the MCQs", () => {
+    const answers = assessment.quiz.map((q) => q.optionsEn[q.answerIndex]);
+    expect(new Set(answers).size).toBe(answers.length);
+  });
+});
+
+describe("Phase 07 — procurement-specialist assessment semantic answer keys", () => {
+  const path = jobPathBySlug("procurement-specialist")!;
+  const assessment = path.assessment;
+  const byId = new Map(assessment.quiz.map((q) => [q.id, q]));
+
+  // Semantic answer-key fixture: the exact answer text each question must resolve to,
+  // in both languages. Pinning the TEXT (not just the index) means a drift of answerIndex,
+  // an option reorder, or a wrong option will fail even if the index looks "in bounds".
+  const ANSWER_KEY: Record<string, { en: string; ar: string; lesson: string }> = {
+    "ja-pr-assess-q1": {
+      en: "Raising purchase requisitions, creating purchase orders and following vendors through to delivery and invoice.",
+      ar: "رفع طلبات الشراء وإصدار أوامر الشراء ومتابعة الموردين حتى التسليم والفاتورة.",
+      lesson: "L1 understanding the procurement role",
+    },
+    "ja-pr-assess-q2": {
+      en: "Documenting an internal need to start the purchasing process.",
+      ar: "توثيق حاجة داخلية لبدء عملية الشراء.",
+      lesson: "L2 raising purchase requisitions",
+    },
+    "ja-pr-assess-q3": {
+      en: "Purchase order approval.",
+      ar: "الموافقة على أمر الشراء.",
+      lesson: "L3 purchase approval workflows",
+    },
+    "ja-pr-assess-q4": {
+      en: "Requesting quotations from several vendors so they can be compared.",
+      ar: "طلب عروض أسعار من عدة موردين لمقارنتها.",
+      lesson: "L4 supplier sourcing and RFQ",
+    },
+    "ja-pr-assess-q5": {
+      en: "Because quality, lead time and reliability affect the total value.",
+      ar: "لأن الجودة والمدة والالتزام تؤثّر على القيمة الكلية.",
+      lesson: "L5 comparing supplier quotations",
+    },
+    "ja-pr-assess-q6": {
+      en: "The company's formal commitment to buy from a vendor on defined terms.",
+      ar: "الالتزام الرسمي للشركة بالشراء من مورد بشروط محدّدة.",
+      lesson: "L6 creating purchase orders",
+    },
+    "ja-pr-assess-q7": {
+      en: "The content defines no dedicated function to create or review an order amendment; the change is documented and communicated for review and approval.",
+      ar: "المحتوى لا يعرّف وظيفة مخصّصة لإنشاء تعديل الأمر أو مراجعته، والتغيير يُوثّق ويُتواصل به للمراجعة والموافقة.",
+      lesson: "L7 managing purchase order amendments",
+    },
+    "ja-pr-assess-q8": {
+      en: "Documenting the quantities actually received from the vendor.",
+      ar: "توثيق الكميات المستلمة فعليًا من المورد.",
+      lesson: "L8 receiving goods",
+    },
+  };
+
+  it("covers the eight assessment questions exactly", () => {
+    expect([...byId.keys()].sort()).toEqual(Object.keys(ANSWER_KEY).sort());
+  });
+
+  it("resolves every answerIndex to the intended English answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.answerIndex, `${id} bounds`).toBeGreaterThanOrEqual(0);
+      expect(q.answerIndex, `${id} bounds`).toBeLessThan(q.optionsEn.length);
+      expect(q.optionsEn[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.en);
+    }
+  });
+
+  it("resolves every answerIndex to the intended Arabic answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.optionsAr[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.ar);
+    }
+  });
+
+  it("keeps every option distinct in both languages", () => {
+    for (const q of assessment.quiz) {
+      expect(q.optionsAr.length, `${q.id} length`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsEn).size, `${q.id} en distinct`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsAr).size, `${q.id} ar distinct`).toBe(q.optionsAr.length);
+    }
+  });
+
+  it("keeps explanations non-empty and in the matching language", () => {
+    const ARABIC_RE = /[\u0600-\u06FF]/;
+    for (const q of assessment.quiz) {
+      const explainEn = q.explainEn ?? "";
+      const explainAr = q.explainAr ?? "";
+      expect(explainEn.length, `${q.id} explainEn`).toBeGreaterThan(0);
+      expect(explainAr.length, `${q.id} explainAr`).toBeGreaterThan(0);
+      expect(ARABIC_RE.test(explainAr), `${q.id} explainAr is Arabic`).toBe(true);
+      expect(ARABIC_RE.test(explainEn), `${q.id} explainEn is not Arabic`).toBe(false);
+    }
+  });
+
+  it("keeps the written responses bilingual and well-formed", () => {
+    for (const r of assessment.responses ?? []) {
+      expect(r.situationAr && r.situationEn, r.id).toBeTruthy();
+      expect(r.optionsAr.length, r.id).toBe(r.optionsEn.length);
+      expect(r.answerIndex, r.id).toBeGreaterThanOrEqual(0);
+      expect(r.answerIndex, r.id).toBeLessThan(r.optionsAr.length);
+    }
+  });
+
+  it("keeps the speaking phrases bilingual with tips", () => {
+    for (const s of assessment.speaking ?? []) {
+      expect(s.en && s.ar, s.id).toBeTruthy();
+      expect(s.tipAr && s.tipEn, s.id).toBeTruthy();
+    }
+  });
+});
+
+describe("Phase 07 — procurement-specialist business guardrails", () => {
+  const path = jobPathBySlug("procurement-specialist")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+  const ARABIC_RE = /[\u0600-\u06FF]/;
+
+  // Teaching content only: scenario + explanations + prompts (NOT distractor options).
+  // Distractors intentionally phrase the *wrong* claims to be rejected, so they must
+  // not be scanned for forbidden wording.
+  const teachingEnFor = (slug: string): string => {
+    const l = bySlug.get(slug)!;
+    return [
+      l.scenarioEn,
+      l.titleEn,
+      ...(l.practice.mcqs ?? []).flatMap((q) => [q.promptEn, q.explainEn ?? ""]),
+      ...(l.practice.responses ?? []).flatMap((r) => [r.situationEn, r.explainEn ?? ""]),
+      ...l.quiz.flatMap((q) => [q.promptEn, q.explainEn ?? ""]),
+    ]
+      .join(" ")
+      .toLowerCase();
+  };
+
+  // The correct (answerIndex-selected) option text across a lesson's questions.
+  const correctEnFor = (slug: string): string => {
+    const l = bySlug.get(slug)!;
+    const picks = [
+      ...(l.practice.mcqs ?? []),
+      ...(l.practice.responses ?? []),
+      ...l.quiz,
+    ].map((q) => q.optionsEn[q.answerIndex]);
+    return picks.join(" ").toLowerCase();
+  };
+
+  it("L2 teaches requisition creation without claiming a dedicated PR approval function", () => {
+    const l = bySlug.get("raising-purchase-requisitions")!;
+    expect(l.refs.businessFunctionIds).toEqual(["purchasing-requisition-create"]);
+    // No lesson may claim a requisition/PR-approval business function.
+    for (const lesson of path.lessons) {
+      for (const id of lesson.refs.businessFunctionIds ?? []) {
+        expect(id, `${lesson.id} must not claim a PR-approval function`).not.toMatch(
+          /requisition.*approv|approv.*requisition/
+        );
+      }
+    }
+  });
+
+  it("L3 scopes approval to purchase orders only (purchasing-orders-approve)", () => {
+    const l = bySlug.get("purchase-approval-workflows")!;
+    expect(l.refs.businessFunctionIds).toEqual(["purchasing-orders-approve"]);
+  });
+
+  it("L7 does not attach customer-order-confirmation content", () => {
+    const l = bySlug.get("creating-purchase-orders")!;
+    expect(l.refs.emailLessonSlugs ?? []).not.toContain("customer-order-confirmation");
+    // The lesson narrative and objectives must frame a purchase order as a purchasing
+    // document and must not present customer order confirmation as part of it.
+    const narrative = [l.scenarioEn, l.titleEn, ...(l.objectivesEn ?? [])]
+      .join(" ")
+      .toLowerCase();
+    expect(narrative).not.toContain("customer order confirmation");
+  });
+
+  it("L8 preserves the approved limitation that no dedicated amendment function exists", () => {
+    const l = bySlug.get("managing-purchase-order-amendments")!;
+    // Approved safety boundary wording: the taught content states the current ERP
+    // content does not define a dedicated amendment creation/review function.
+    const teaching = teachingEnFor(l.slug);
+    const hasEnLimit =
+      teaching.includes("does not define") &&
+      teaching.includes("amendment") &&
+      (teaching.includes("create") || teaching.includes("review"));
+    expect(hasEnLimit, "EN must state no dedicated amendment function is defined").toBe(true);
+    // Arabic counterpart must carry the same meaning.
+    const arCorpus = [
+      l.scenarioAr,
+      ...l.quiz.flatMap((q) => [q.promptAr, q.explainAr ?? ""]),
+      ...(l.practice.mcqs ?? []).flatMap((q) => [q.promptAr, q.explainAr ?? ""]),
+    ]
+      .join(" ")
+      .toLowerCase();
+    expect(ARABIC_RE.test(arCorpus)).toBe(true);
+    expect(arCorpus.includes("لا يعرّف"), "AR must state the function is not defined").toBe(true);
+  });
+
+  it("L8 does not imply that PO approval creates or amends a PO", () => {
+    // Only the correct answers and explanations are scanned: a distractor may phrase
+    // the wrong claim to be rejected, but the lesson must never TEACH it.
+    const taught = correctEnFor("managing-purchase-order-amendments") + " " + teachingEnFor("managing-purchase-order-amendments");
+    for (const forbidden of [
+      "approval creates the amendment",
+      "approval creates the order",
+      "approval amends",
+      "automatically reverses",
+      "recreates the order",
+      "recreate the order",
+    ]) {
+      expect(taught, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("L9 does not claim an unsupported receipt-discrepancy screen or function", () => {
+    const l = bySlug.get("receiving-goods-and-handling-discrepancies")!;
+    expect(l.refs.businessFunctionIds).toEqual(["purchasing-receipts-receive"]);
+    // Correct answers must not present a dedicated discrepancy screen as available.
+    expect(correctEnFor(l.slug)).not.toContain("dedicated screen");
+    expect(correctEnFor(l.slug)).not.toContain("discrepancy screen exists");
+    // The AP unit-price discrepancy email belongs to L10, not the receipt lesson.
+    expect(l.refs.emailLessonSlugs ?? []).not.toContain("invoice-discrepancy");
+  });
+
+  it("L10 maps invoice-discrepancy to an AP unit-price mismatch, not a quantity discrepancy", () => {
+    const l = bySlug.get("matching-vendor-invoices")!;
+    expect(l.refs.emailLessonSlugs).toContain("invoice-discrepancy");
+    // Correct answers associate it with a unit-price difference, not a receipt quantity.
+    const correct = correctEnFor(l.slug);
+    expect(correct).toContain("unit-price");
+    expect(correct).not.toContain("receipt quantity");
+  });
+
+  it("L10 does not reference scr-payment as an invoice-matching screen", () => {
+    const l = bySlug.get("matching-vendor-invoices")!;
+    expect(l.refs.screenIds ?? []).not.toContain("scr-payment");
+    expect(l.refs.wordIds ?? []).not.toContain("scr-payment");
+    for (const lesson of path.lessons) {
+      expect(lesson.refs.screenIds ?? [], lesson.id).not.toContain("scr-payment");
+    }
+  });
+
+  it("keeps the procurement/AP ownership boundary clear", () => {
+    const l = bySlug.get("matching-vendor-invoices")!;
+    // Procurement cooperates with AP on invoice registration/matching but does not
+    // own payment execution.
+    expect(l.refs.subModuleIds).toContain("purchasing-vendor-bills");
+    expect(l.refs.subModuleIds).toContain("finance-ap");
+    expect(l.refs.businessFunctionIds).toEqual([
+      "purchasing-vendor-bills-register",
+      "finance-ap-register-bill",
+    ]);
+    expect(l.refs.businessFunctionIds ?? []).not.toContain("finance-ap-pay-vendor");
   });
 });
 

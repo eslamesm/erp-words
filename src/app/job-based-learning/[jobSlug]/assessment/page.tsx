@@ -1,4 +1,5 @@
-import { READY_JOB_PATHS } from "@/data/jobPaths";
+import { notFound } from "next/navigation";
+import { READY_JOB_PATHS, readyJobPathBySlug } from "@/data/jobPaths";
 import { JobAssessmentPageClient } from "@/components/jobs/JobPageClients";
 
 export function generateStaticParams() {
@@ -11,5 +12,8 @@ export default async function JobAssessmentSlugPage({
   params: Promise<{ jobSlug: string }>;
 }) {
   const { jobSlug } = await params;
+  if (!readyJobPathBySlug(jobSlug)) {
+    notFound();
+  }
   return <JobAssessmentPageClient pathSlug={jobSlug} />;
 }
