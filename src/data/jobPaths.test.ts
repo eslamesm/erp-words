@@ -275,9 +275,9 @@ function countAnswerOptionItems(): number {
 describe("Phase 05.6 — answer positions (Task 1)", () => {
   const items = collectAnswerOptionItems();
 
-  it("covers all 424 answer-option items across the four paths", () => {
-    // 4 paths × 106: pilot + accountant + procurement-specialist + manufacturing-planner.
-    expect(items.length).toBe(424);
+  it("covers all 530 answer-option items across the five paths", () => {
+    // 5 paths × 106: pilot + accountant + procurement-specialist + manufacturing-planner + warehouse-officer.
+    expect(items.length).toBe(530);
     // Self-check against the live structure so a new path cannot slip in silently.
     expect(items.length).toBe(countAnswerOptionItems());
   });
@@ -571,10 +571,15 @@ describe("Phase 05.6 — planned-path visibility (Task 6)", () => {
   });
 
   it("pins the exact planned-path slug set", () => {
-    // Two planned paths ship in Phase 07/08: procurement-specialist and manufacturing-planner.
+    // Three planned paths ship in Phase 07/08/09: procurement-specialist,
+    // manufacturing-planner and warehouse-officer.
     // Assert the SET (not just a count) so no unexpected planned path is accepted.
     const planned = JOB_PATHS.filter((p) => p.status === "planned").map((p) => p.slug).sort();
-    expect(planned).toEqual(["manufacturing-planner", "procurement-specialist"]);
+    expect(planned).toEqual([
+      "manufacturing-planner",
+      "procurement-specialist",
+      "warehouse-officer",
+    ]);
   });
 
   it("pins the exact ready-path slug set", () => {
@@ -2221,4 +2226,696 @@ describe("Phase 08 — manufacturing-planner business guardrails", () => {
 function ipLocal(arr: string[] | undefined): string[] {
   return arr ?? [];
 }
+
+describe("Phase 09 — warehouse-officer path shape", () => {
+  const path = jobPathBySlug("warehouse-officer")!;
+
+  it("exists with the expected identity and metadata", () => {
+    expect(path).toBeTruthy();
+    expect(path.id).toBe("job-warehouse-officer");
+    expect(path.slug).toBe("warehouse-officer");
+    expect(path.status).toBe("planned");
+    expect(path.level).toBe("B2");
+    expect(path.titleEn).toBe("ERP Warehouse Officer");
+    expect(path.icon).toBeTruthy();
+    expect(path.summaryAr && path.summaryEn, "summary").toBeTruthy();
+    expect(path.descAr && path.descEn, "desc").toBeTruthy();
+    expect(path.learningObjectivesAr.length).toBeGreaterThan(0);
+    expect(path.learningObjectivesAr.length).toBe(path.learningObjectivesEn.length);
+  });
+
+  it("does not link to a career path (no warehouse career path exists)", () => {
+    expect(path.careerPathId).toBeUndefined();
+  });
+
+  it("has exactly 12 lessons ordered 1..12 with the approved slugs", () => {
+    expect(path.lessons.length).toBe(12);
+    path.lessons.forEach((l, i) => {
+      expect(l.order, l.id).toBe(i + 1);
+      expect(l.level, l.id).toBe("B2");
+    });
+    expect(path.lessons.map((l) => l.slug)).toEqual([
+      "understanding-warehouse-officer-role",
+      "receiving-goods",
+      "handling-receiving-discrepancies",
+      "putaway-and-storage-locations",
+      "stock-availability-and-on-hand",
+      "stock-picking-and-order-preparation",
+      "packing-and-shipping",
+      "internal-stock-transfers",
+      "inventory-adjustments",
+      "cycle-counting-and-physical-inventory",
+      "lot-serial-batch-traceability",
+      "managing-replenishment-and-stock-risks",
+    ]);
+  });
+
+  it("uses the approved lesson ids job-wo-01..job-wo-12", () => {
+    expect(path.lessons.map((l) => l.id)).toEqual([
+      "job-wo-01-understanding-warehouse-officer-role",
+      "job-wo-02-receiving-goods",
+      "job-wo-03-handling-receiving-discrepancies",
+      "job-wo-04-putaway-and-storage-locations",
+      "job-wo-05-stock-availability-and-on-hand",
+      "job-wo-06-stock-picking-and-order-preparation",
+      "job-wo-07-packing-and-shipping",
+      "job-wo-08-internal-stock-transfers",
+      "job-wo-09-inventory-adjustments",
+      "job-wo-10-cycle-counting-and-physical-inventory",
+      "job-wo-11-lot-serial-batch-traceability",
+      "job-wo-12-managing-replenishment-and-stock-risks",
+    ]);
+  });
+
+  it("remains planned and is not exposed as a ready path", () => {
+    expect(path.status).toBe("planned");
+    expect(READY_JOB_PATHS.some((p) => p.slug === "warehouse-officer")).toBe(false);
+  });
+
+  it("keeps every lesson id and activity id unique project-wide", () => {
+    const lessonIds = JOB_PATHS.flatMap((p) => p.lessons.map((l) => l.id));
+    expect(new Set(lessonIds).size).toBe(lessonIds.length);
+
+    const activityIds = JOB_PATHS.flatMap((p) => [
+      ...p.lessons.flatMap((l) => [
+        ...(l.practice.mcqs ?? []).map((a) => a.id),
+        ...(l.practice.responses ?? []).map((a) => a.id),
+        ...(l.practice.order ?? []).map((a) => a.id),
+        ...(l.practice.phrases ?? []).map((a) => a.id),
+        ...l.quiz.map((a) => a.id),
+      ]),
+      ...p.assessment.quiz.map((a) => a.id),
+      ...(p.assessment.responses ?? []).map((a) => a.id),
+      ...(p.assessment.speaking ?? []).map((a) => a.id),
+    ]);
+    expect(new Set(activityIds).size).toBe(activityIds.length);
+  });
+});
+
+describe("Phase 09 — warehouse-officer lesson refs", () => {
+  const path = jobPathBySlug("warehouse-officer")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+
+  // Approved reference map (Phase 09.2). Pinned so a drift of a ref is caught.
+  const EXPECTED_REFS: Record<
+    string,
+    {
+      processIds?: string[];
+      subModuleIds?: string[];
+      businessFunctionIds?: string[];
+      wordIds?: string[];
+      screenIds?: string[];
+      emailLessonSlugs?: string[];
+      meetingLessonSlugs?: string[];
+    }
+  > = {
+    "understanding-warehouse-officer-role": {
+      processIds: ["o2c"],
+      subModuleIds: ["warehouse-operations", "warehouse-receiving"],
+      wordIds: ["warehouse", "goods-receipt", "put-away", "pick-list"],
+      screenIds: ["scr-warehouse"],
+      meetingLessonSlugs: ["introducing-yourself-role"],
+    },
+    "receiving-goods": {
+      processIds: ["p2p"],
+      subModuleIds: ["warehouse-receiving", "purchasing-receipts"],
+      businessFunctionIds: ["purchasing-receipts-receive"],
+      wordIds: ["goods-receipt", "barcode", "sku"],
+      screenIds: ["scr-goods-receipt"],
+    },
+    "handling-receiving-discrepancies": {
+      processIds: ["p2p"],
+      subModuleIds: ["warehouse-receiving", "purchasing-receipts"],
+      businessFunctionIds: ["purchasing-receipts-receive"],
+      wordIds: ["goods-receipt", "stockout", "backorder"],
+      screenIds: ["scr-goods-receipt"],
+      emailLessonSlugs: ["issue-escalation"],
+    },
+    "putaway-and-storage-locations": {
+      processIds: ["p2p"],
+      subModuleIds: ["warehouse-putaway", "warehouse-locations"],
+      wordIds: ["put-away", "bin-location", "warehouse"],
+      screenIds: ["fld-warehouse", "fld-location"],
+    },
+    "stock-availability-and-on-hand": {
+      processIds: ["o2c"],
+      subModuleIds: ["inventory-on-hand", "warehouse-operations"],
+      wordIds: ["stock", "sku", "stockout"],
+      screenIds: ["scr-warehouse"],
+    },
+    "stock-picking-and-order-preparation": {
+      processIds: ["o2c"],
+      subModuleIds: ["warehouse-picking"],
+      wordIds: ["pick-list", "bin-location", "barcode"],
+      screenIds: ["scr-delivery"],
+    },
+    "packing-and-shipping": {
+      processIds: ["o2c"],
+      subModuleIds: ["warehouse-packing", "warehouse-shipping"],
+      wordIds: ["delivery-note", "cross-docking"],
+      screenIds: ["scr-delivery"],
+    },
+    "internal-stock-transfers": {
+      processIds: ["p2p"],
+      subModuleIds: ["warehouse-locations", "inventory-transfers"],
+      businessFunctionIds: ["inventory-transfers-create"],
+      wordIds: ["stock-transfer", "bin-location", "warehouse"],
+      screenIds: ["scr-stock-transfer"],
+    },
+    "inventory-adjustments": {
+      processIds: ["p2p"],
+      subModuleIds: ["inventory-adjustments", "warehouse-operations"],
+      businessFunctionIds: ["inventory-adjustments-apply"],
+      wordIds: ["adjustment", "stock", "sku"],
+      screenIds: ["scr-inventory-adjustment"],
+    },
+    "cycle-counting-and-physical-inventory": {
+      processIds: ["p2p"],
+      subModuleIds: ["warehouse-cycle-counting", "warehouse-operations"],
+      businessFunctionIds: ["inventory-cycle-count"],
+      wordIds: ["cycle-count", "physical-inventory", "abc-analysis"],
+      screenIds: ["scr-stock-count"],
+    },
+    "lot-serial-batch-traceability": {
+      processIds: ["p2produce"],
+      subModuleIds: ["inventory-lot-serial", "warehouse-operations"],
+      wordIds: ["lot-number", "batch", "sku"],
+      screenIds: ["fld-batch", "fld-serial-number"],
+    },
+    "managing-replenishment-and-stock-risks": {
+      processIds: ["p2p"],
+      subModuleIds: ["inventory-reordering", "warehouse-operations"],
+      wordIds: ["reorder-point", "safety-stock", "min-max", "lead-time", "abc-analysis"],
+      screenIds: ["scr-report-center"],
+      meetingLessonSlugs: ["problems-action-items"],
+    },
+  };
+
+  it("covers all 12 lessons", () => {
+    expect([...bySlug.keys()].sort()).toEqual(Object.keys(EXPECTED_REFS).sort());
+  });
+
+  it("matches the approved reference map exactly", () => {
+    for (const [slug, expected] of Object.entries(EXPECTED_REFS)) {
+      const refs = bySlug.get(slug)!.refs;
+      expect(refs.processIds ?? [], `${slug} processIds`).toEqual(expected.processIds ?? []);
+      expect(refs.subModuleIds ?? [], `${slug} subModuleIds`).toEqual(expected.subModuleIds ?? []);
+      expect(refs.businessFunctionIds ?? [], `${slug} businessFunctionIds`).toEqual(
+        expected.businessFunctionIds ?? []
+      );
+      expect(refs.wordIds ?? [], `${slug} wordIds`).toEqual(expected.wordIds ?? []);
+      expect(refs.screenIds ?? [], `${slug} screenIds`).toEqual(expected.screenIds ?? []);
+      expect(refs.emailLessonSlugs ?? [], `${slug} emailLessonSlugs`).toEqual(
+        expected.emailLessonSlugs ?? []
+      );
+      expect(refs.meetingLessonSlugs ?? [], `${slug} meetingLessonSlugs`).toEqual(
+        expected.meetingLessonSlugs ?? []
+      );
+    }
+  });
+
+  it("resolves every reference against the existing content", () => {
+    for (const l of path.lessons) {
+      const refs = l.refs;
+      for (const id of refs.processIds ?? []) {
+        expect(processById(id), `${l.slug} → process ${id}`).toBeTruthy();
+      }
+      for (const id of refs.subModuleIds ?? []) {
+        expect(SUB_MODULE_ID_SET.has(id), `${l.slug} → subModule ${id}`).toBe(true);
+      }
+      for (const id of refs.businessFunctionIds ?? []) {
+        expect(BUSINESS_FUNCTION_ID_SET.has(id), `${l.slug} → businessFunction ${id}`).toBe(true);
+      }
+      for (const id of [...(refs.wordIds ?? []), ...(refs.screenIds ?? [])]) {
+        expect(wordById(id), `${l.slug} → word ${id}`).toBeTruthy();
+      }
+      for (const slug of refs.emailLessonSlugs ?? []) {
+        expect(emailBySlug(slug), `${l.slug} → email ${slug}`).toBeTruthy();
+      }
+      for (const slug of refs.meetingLessonSlugs ?? []) {
+        expect(meetingBySlug(slug), `${l.slug} → meeting ${slug}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("only links quiz questions to existing words", () => {
+    const quiz = [
+      ...path.lessons.flatMap((l) => l.quiz),
+      ...path.lessons.flatMap((l) => l.practice.mcqs ?? []),
+      ...path.assessment.quiz,
+    ];
+    for (const q of quiz) {
+      if (q.wordId) {
+        expect(wordById(q.wordId), `${q.id} → word ${q.wordId}`).toBeTruthy();
+      }
+    }
+  });
+});
+
+describe("Phase 09 — warehouse-officer practice shape", () => {
+  const path = jobPathBySlug("warehouse-officer")!;
+
+  it("gives every lesson 2 MCQs, 1 response, a 5-step ordering and 2 phrases", () => {
+    for (const l of path.lessons) {
+      expect(l.practice.mcqs?.length, `${l.id} mcqs`).toBe(2);
+      expect(l.practice.responses?.length, `${l.id} responses`).toBe(1);
+      expect(l.practice.order?.length, `${l.id} order`).toBe(5);
+      expect(l.practice.phrases?.length, `${l.id} phrases`).toBe(2);
+    }
+  });
+
+  it("gives every lesson a 5-question quiz with complete bilingual options", () => {
+    for (const l of path.lessons) {
+      expect(l.quiz.length, `${l.id} quiz`).toBe(5);
+      for (const q of l.quiz) {
+        expect(q.promptAr && q.promptEn, q.id).toBeTruthy();
+        expect(q.optionsAr.length, q.id).toBe(q.optionsEn.length);
+        expect(q.optionsAr.length, q.id).toBeGreaterThan(1);
+        expect(q.answerIndex, q.id).toBeGreaterThanOrEqual(0);
+        expect(q.answerIndex, q.id).toBeLessThan(q.optionsAr.length);
+      }
+    }
+  });
+});
+
+describe("Phase 09 — warehouse-officer assessment coverage", () => {
+  const path = jobPathBySlug("warehouse-officer")!;
+  const assessment = path.assessment;
+
+  // Approved coverage map: 8 MCQs sample L2–L7, L9, L11; the 2 written
+  // responses cover L3 and L12; the 3 speaking phrases cover L1, L8 and L10.
+  const LESSON_BY_QUESTION: Record<string, number> = {
+    "ja-wo-assess-q1": 2,
+    "ja-wo-assess-q2": 3,
+    "ja-wo-assess-q3": 4,
+    "ja-wo-assess-q4": 5,
+    "ja-wo-assess-q5": 6,
+    "ja-wo-assess-q6": 7,
+    "ja-wo-assess-q7": 9,
+    "ja-wo-assess-q8": 11,
+  };
+
+  it("has 8 MCQs covering the approved lessons exactly once", () => {
+    const ids = assessment.quiz.map((q) => q.id).sort();
+    expect(ids).toEqual(Object.keys(LESSON_BY_QUESTION).sort());
+    const lessons = Object.values(LESSON_BY_QUESTION);
+    expect(new Set(lessons).size).toBe(lessons.length);
+    for (const n of lessons) {
+      expect(n).toBeGreaterThanOrEqual(1);
+      expect(n).toBeLessThanOrEqual(12);
+    }
+  });
+
+  it("has 2 written responses and 3 speaking phrases (13 activities total)", () => {
+    expect(assessment.quiz.length).toBe(8);
+    expect((assessment.responses ?? []).length).toBe(2);
+    expect((assessment.speaking ?? []).length).toBe(3);
+    expect(
+      assessment.quiz.length + (assessment.responses ?? []).length + (assessment.speaking ?? []).length
+    ).toBe(13);
+  });
+
+  it("covers the discrepancy and replenishment lessons through the written responses", () => {
+    expect((assessment.responses ?? []).map((r) => r.id).sort()).toEqual(
+      ["ja-wo-assess-r1", "ja-wo-assess-r2"].sort()
+    );
+  });
+
+  it("covers the role, transfer and counting lessons through the speaking phrases", () => {
+    expect((assessment.speaking ?? []).map((s) => s.id).sort()).toEqual(
+      ["ja-wo-assess-sp1", "ja-wo-assess-sp2", "ja-wo-assess-sp3"].sort()
+    );
+  });
+
+  it("does not support or declare an assessment Ordering activity", () => {
+    // The assessment schema has no ordering field; guard against a future addition
+    // that the UI cannot render.
+    expect("order" in assessment).toBe(false);
+    expect((assessment as { order?: unknown }).order).toBeUndefined();
+  });
+
+  it("does not repeat the same correct answer text within the MCQs", () => {
+    const answers = assessment.quiz.map((q) => q.optionsEn[q.answerIndex]);
+    expect(new Set(answers).size).toBe(answers.length);
+  });
+});
+
+describe("Phase 09 — warehouse-officer assessment semantic answer keys", () => {
+  const path = jobPathBySlug("warehouse-officer")!;
+  const assessment = path.assessment;
+  const byId = new Map(assessment.quiz.map((q) => [q.id, q]));
+
+  // Semantic answer-key fixture: the exact answer text each question must resolve to,
+  // in both languages. Pinning the TEXT (not just the index) means a drift of answerIndex,
+  // an option reorder, or a wrong option will fail even if the index looks "in bounds".
+  const ANSWER_KEY: Record<string, { en: string; ar: string; lesson: string }> = {
+    "ja-wo-assess-q1": {
+      en: "Confirming that what was ordered actually arrived before recording the receipt.",
+      ar: "التأكد من وصول ما طُلب فعليًا قبل تسجيل الاستلام.",
+      lesson: "L2 receiving goods",
+    },
+    "ja-wo-assess-q2": {
+      en: "I count and document the discrepancy, record the receipt, then communicate with procurement to follow it up.",
+      ar: "أعدّ وأوثّق الفرق وأسجّل الاستلام ثم أتواصل مع المشتريات لمتابعته.",
+      lesson: "L3 handling receiving discrepancies",
+    },
+    "ja-wo-assess-q3": {
+      en: "Moving the received goods to the appropriate location so they are stored in an organised and traceable way.",
+      ar: "نقل البضاعة المستلمة إلى الموقع المناسب لتخزينها بشكل منظّم وقابل للتتبّع.",
+      lesson: "L4 putaway and storage locations",
+    },
+    "ja-wo-assess-q4": {
+      en: "The recorded quantity is what shows in stock, and part of it may be reserved or committed, so not all of it is available.",
+      ar: "الكمية المسجّلة ما يظهر في المخزون، وقد تكون بعضها محجوزًا أو ملتزمًا به فليست كلها متاحة.",
+      lesson: "L5 stock availability and on-hand",
+    },
+    "ja-wo-assess-q5": {
+      en: "Specifying the items, quantities and locations to be picked to fulfil the order.",
+      ar: "تحديد الأصناف والكميات والمواقع التي يجب سحبها لتلبية الطلب.",
+      lesson: "L6 stock picking and order preparation",
+    },
+    "ja-wo-assess-q6": {
+      en: "A document describing the shipped goods; it is a document, not proof of a goods-issue capability.",
+      ar: "مستند يعرّف بالبضاعة المشحونة، وهو مستند وليس إثباتًا لوظيفة إصدار بضاعة.",
+      lesson: "L7 packing and shipping",
+    },
+    "ja-wo-assess-q7": {
+      en: "Identify, then verify and document, then obtain required authorization, then apply.",
+      ar: "التحديد ثم التحقق والتوثيق ثم التصريح المطلوب ثم التطبيق.",
+      lesson: "L9 inventory adjustments",
+    },
+    "ja-wo-assess-q8": {
+      en: "Operational traceability of the goods' path without claiming regulatory or pharmaceutical coverage.",
+      ar: "تتبّع تشغيلي لمسار البضاعة دون ادّعاء تغطية تنظيمية أو دوائية.",
+      lesson: "L11 lot, serial and batch traceability",
+    },
+  };
+
+  it("covers the eight assessment questions exactly", () => {
+    expect([...byId.keys()].sort()).toEqual(Object.keys(ANSWER_KEY).sort());
+  });
+
+  it("resolves every answerIndex to the intended English answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.answerIndex, `${id} bounds`).toBeGreaterThanOrEqual(0);
+      expect(q.answerIndex, `${id} bounds`).toBeLessThan(q.optionsEn.length);
+      expect(q.optionsEn[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.en);
+    }
+  });
+
+  it("resolves every answerIndex to the intended Arabic answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.optionsAr[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.ar);
+    }
+  });
+
+  it("places the MCQs at the planned answer indices [2,3,0,1,2,3,0,1]", () => {
+    const planned = [2, 3, 0, 1, 2, 3, 0, 1];
+    assessment.quiz.forEach((q, i) => {
+      expect(q.answerIndex, q.id).toBe(planned[i]);
+    });
+  });
+
+  it("keeps every option distinct in both languages", () => {
+    for (const q of assessment.quiz) {
+      expect(q.optionsAr.length, `${q.id} length`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsEn).size, `${q.id} en distinct`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsAr).size, `${q.id} ar distinct`).toBe(q.optionsAr.length);
+    }
+  });
+
+  it("keeps explanations non-empty and in the matching language", () => {
+    const ARABIC_RE = /[\u0600-\u06FF]/;
+    for (const q of assessment.quiz) {
+      const explainEn = q.explainEn ?? "";
+      const explainAr = q.explainAr ?? "";
+      expect(explainEn.length, `${q.id} explainEn`).toBeGreaterThan(0);
+      expect(explainAr.length, `${q.id} explainAr`).toBeGreaterThan(0);
+      expect(ARABIC_RE.test(explainAr), `${q.id} explainAr is Arabic`).toBe(true);
+      expect(ARABIC_RE.test(explainEn), `${q.id} explainEn is not Arabic`).toBe(false);
+    }
+  });
+
+  it("keeps the written responses bilingual and well-formed", () => {
+    for (const r of assessment.responses ?? []) {
+      expect(r.situationAr && r.situationEn, r.id).toBeTruthy();
+      expect(r.optionsAr.length, r.id).toBe(r.optionsEn.length);
+      expect(r.answerIndex, r.id).toBeGreaterThanOrEqual(0);
+      expect(r.answerIndex, r.id).toBeLessThan(r.optionsAr.length);
+    }
+  });
+
+  it("keeps the speaking phrases bilingual with tips", () => {
+    for (const s of assessment.speaking ?? []) {
+      expect(s.en && s.ar, s.id).toBeTruthy();
+      expect(s.tipAr && s.tipEn, s.id).toBeTruthy();
+    }
+  });
+});
+
+describe("Phase 09 — warehouse-officer business guardrails", () => {
+  const path = jobPathBySlug("warehouse-officer")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+
+  // Teaching content only: scenario + objectives + explanations + prompts (NOT distractor
+  // options). Distractors intentionally phrase the *wrong* claims to be rejected, so they
+  // must not be scanned for forbidden wording.
+  const teachingAllFor = (slug: string): string => {
+    const l = bySlug.get(slug)!;
+    return [
+      l.titleEn,
+      l.scenarioEn,
+      l.titleAr,
+      l.scenarioAr,
+      ...(l.objectivesEn ?? []),
+      ...(l.objectivesAr ?? []),
+      ...(l.practice.mcqs ?? []).flatMap((q) => [q.promptEn, q.explainEn ?? "", q.promptAr, q.explainAr ?? ""]),
+      ...(l.practice.responses ?? []).flatMap((r) => [
+        r.situationEn,
+        r.explainEn ?? "",
+        r.situationAr,
+        r.explainAr ?? "",
+      ]),
+      ...l.quiz.flatMap((q) => [q.promptEn, q.explainEn ?? "", q.promptAr, q.explainAr ?? ""]),
+    ]
+      .join(" ")
+      .toLowerCase();
+  };
+
+  const correctEnFor = (slug: string): string => {
+    const l = bySlug.get(slug)!;
+    const picks = [...(l.practice.mcqs ?? []), ...(l.practice.responses ?? []), ...l.quiz].map(
+      (q) => q.optionsEn[q.answerIndex]
+    );
+    return picks.join(" ").toLowerCase();
+  };
+
+  it("never claims an unsupported warehouse business function", () => {
+    const allowed = new Set([
+      "purchasing-receipts-receive",
+      "inventory-transfers-create",
+      "inventory-adjustments-apply",
+      "inventory-cycle-count",
+    ]);
+    for (const l of path.lessons) {
+      for (const id of l.refs.businessFunctionIds ?? []) {
+        expect(allowed.has(id), `${l.id} → ${id} must be a supported warehouse-related BF`).toBe(true);
+      }
+    }
+  });
+
+  it("never references a forbidden screen as a dedicated capability", () => {
+    const FORBIDDEN_SCREENS = [
+      "scr-mrp",
+      "scr-putaway",
+      "scr-availability",
+      "scr-replenishment",
+      "scr-discrepancy",
+      "scr-reservations",
+      "scr-goods-issue",
+    ];
+    for (const l of path.lessons) {
+      for (const id of l.refs.screenIds ?? []) {
+        expect(FORBIDDEN_SCREENS, `${l.id} → ${id}`).not.toContain(id);
+      }
+    }
+  });
+
+  it("L1 keeps the warehouse out of purchasing, valuation and production", () => {
+    const teaching = teachingAllFor("understanding-warehouse-officer-role");
+    expect(teaching).toMatch(/purchas|procurement/);
+    expect(teaching).toMatch(/valuation|account|cost/);
+    expect(teaching).toContain("production");
+  });
+
+  it("L2 keeps goods receipt distinct from vendor invoice matching", () => {
+    const l = bySlug.get("receiving-goods")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/invoice/);
+    expect(teaching).toMatch(/receipt/);
+    const correct = correctEnFor(l.slug);
+    expect(correct).toMatch(/matching and payment are your responsibility/);
+  });
+
+  it("L3 teaches counting, documenting and communicating without an invented discrepancy screen", () => {
+    const l = bySlug.get("handling-receiving-discrepancies")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toContain("count");
+    expect(teaching).toMatch(/document/);
+    expect(teaching).toMatch(/communicat/);
+    for (const forbidden of [
+      "discrepancy screen exists",
+      "automated discrepancy workflow exists",
+      "a dedicated discrepancy screen handles",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+    const correct = correctEnFor(l.slug);
+    expect(correct).toMatch(/count and document the discrepancy/);
+  });
+
+  it("L4 keeps putaway operational without a dedicated screen or automatic allocation", () => {
+    const l = bySlug.get("putaway-and-storage-locations")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toContain("putaway");
+    expect(teaching).toMatch(/location/);
+    for (const forbidden of [
+      "putaway screen exists",
+      "automatic location allocation exists",
+      "locations are allocated automatically",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("L5 keeps recorded distinct from available and avoids a reservations screen", () => {
+    const l = bySlug.get("stock-availability-and-on-hand")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/recorded/);
+    expect(teaching).toMatch(/available/);
+    expect(teaching).toMatch(/commitment|reservation/);
+    for (const forbidden of [
+      "reservations screen exists",
+      "availability screen exists",
+      "the recorded quantity is always available",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("L6 distinguishes picking from packing and shipping", () => {
+    const teaching = teachingAllFor("stock-picking-and-order-preparation");
+    expect(teaching).toMatch(/pick/);
+    expect(teaching).toMatch(/pack/);
+    expect(teaching).toMatch(/ship/);
+    expect(teaching).toMatch(/separate/);
+  });
+
+  it("L7 keeps the delivery note a document and denies it proves a goods-issue capability", () => {
+    const l = bySlug.get("packing-and-shipping")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/document/);
+    expect(teaching).toMatch(/process/);
+    for (const forbidden of [
+      "the delivery note executes goods issue",
+      "the delivery note confirms goods issue",
+      "goods-issue function exists",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("L8 keeps internal transfers out of purchasing and production", () => {
+    const l = bySlug.get("internal-stock-transfers")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/transfer/);
+    expect(teaching).toMatch(/purchas/);
+    expect(teaching).toMatch(/production/);
+    const correct = correctEnFor(l.slug);
+    expect(correct).toMatch(/neither purchasing nor production|it is not a purchase/);
+  });
+
+  it("L9 distinguishes adjustment steps and requires authorization without an invented workflow", () => {
+    const l = bySlug.get("inventory-adjustments")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/verif/);
+    expect(teaching).toMatch(/document/);
+    expect(teaching).toMatch(/authoriz/);
+    for (const forbidden of [
+      "approval workflow exists",
+      "permission model exists",
+      "adjustment is applied automatically",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+    const correct = correctEnFor(l.slug);
+    expect(correct).toMatch(/obtain any required authorization according to the organization's controls/);
+  });
+
+  it("L10 teaches that counting does not automatically update stock", () => {
+    const l = bySlug.get("cycle-counting-and-physical-inventory")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/count/);
+    for (const forbidden of [
+      "counting updates stock automatically",
+      "counting automatically corrects the quantities",
+      "the system corrects the quantities automatically",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+    const correct = correctEnFor(l.slug);
+    expect(correct).toMatch(/counting records the results/);
+  });
+
+  it("L11 keeps traceability operational without regulatory or pharmaceutical claims", () => {
+    const l = bySlug.get("lot-serial-batch-traceability")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/batch|serial|lot/);
+    expect(teaching).toMatch(/trace/);
+    for (const forbidden of [
+      "regulatory compliance is covered",
+      "ensures regulatory compliance",
+      "pharmaceutical compliance is covered",
+      "guarantees regulatory compliance",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+  });
+
+  it("L12 frames replenishment as identify-and-communicate, not an automated purchase", () => {
+    const l = bySlug.get("managing-replenishment-and-stock-risks")!;
+    const teaching = teachingAllFor(l.slug);
+    expect(teaching).toMatch(/communicat/);
+    expect(teaching).toMatch(/procurement/);
+    for (const forbidden of [
+      "automated replenishment workflow exists",
+      "replenishment is automated",
+      "the warehouse buys",
+    ]) {
+      expect(teaching, `forbidden taught claim: ${forbidden}`).not.toContain(forbidden);
+    }
+    const correct = correctEnFor(l.slug);
+    expect(correct).toMatch(/purchasing is (your|their) responsibility|identifying the need/);
+  });
+
+  it("keeps valuation and accounting out of warehouse ownership across the path", () => {
+    // No lesson may reference an inventory-valuation business function.
+    for (const l of path.lessons) {
+      for (const id of l.refs.businessFunctionIds ?? []) {
+        expect(id, `${l.id} must not claim a valuation BF`).not.toMatch(/valuation|journal|gl-/);
+      }
+    }
+  });
+
+  it("does not reuse plan-to-produce quiz text verbatim in the assessment", () => {
+    const p2p = processById("p2produce")!;
+    const source = p2p.quiz?.map((q) => q.promptEn.toLowerCase()) ?? [];
+    for (const q of path.assessment.quiz) {
+      expect(source, `${q.id} prompt must not be copied verbatim`).not.toContain(q.promptEn.toLowerCase());
+    }
+  });
+});
+
 

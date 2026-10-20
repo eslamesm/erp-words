@@ -9,6 +9,7 @@ import type {
 import { erpAccountantPath } from "./jobPathsAccountant";
 import { procurementSpecialistPath } from "./jobPathsProcurement";
 import { manufacturingPlannerPath } from "./jobPathsManufacturing";
+import { warehouseOfficerPath } from "./jobPathsWarehouse";
 
 // ═══════════════ Phase 05: التعلّم حسب الوظيفة (Job-Based Learning) ═══════════════
 // كل مسار وظيفي يجمع دروسًا مبنية على مهام العمل الحقيقية، ويربطها بمحتوى
@@ -3137,11 +3138,14 @@ const pilotPaths: JobPath[] = [
 // الجاهزية لاحقًا)، ويبقى مخفيًا عن الواجهة عبر READY_JOB_PATHS.
 // Phase 08: مسار مخطط التصنيع يُضاف رابعًا بحالة "planned" (يُفعّل في مرحلة
 // الجاهزية لاحقًا)، ويبقى مخفيًا عن الواجهة عبر READY_JOB_PATHS.
+// Phase 09: مسار أمين المخزن يُضاف خامسًا بحالة "planned" (يُفعّل في مرحلة
+// الجاهزية لاحقًا)، ويبقى مخفيًا عن الواجهة عبر READY_JOB_PATHS.
 export const JOB_PATHS: JobPath[] = [
   ...pilotPaths,
   erpAccountantPath,
   procurementSpecialistPath,
   manufacturingPlannerPath,
+  warehouseOfficerPath,
 ];
 
 // قرار الإتاحة (Phase 05.5 / 05.6): تُعرض المسارات ذات الحالة "ready" فقط في الواجهة
