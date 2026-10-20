@@ -6,6 +6,7 @@ import type {
   ProcessQuizQuestion,
   SpeakingPhrase,
 } from "@/types";
+import { erpAccountantPath } from "./jobPathsAccountant";
 
 // ═══════════════ Phase 05: التعلّم حسب الوظيفة (Job-Based Learning) ═══════════════
 // كل مسار وظيفي يجمع دروسًا مبنية على مهام العمل الحقيقية، ويربطها بمحتوى
@@ -90,7 +91,7 @@ export interface JobPath {
   };
 }
 
-export const JOB_PATHS: JobPath[] = [
+const pilotPaths: JobPath[] = [
   {
     id: "job-erp-functional-consultant",
     slug: "erp-functional-consultant",
@@ -3127,6 +3128,10 @@ export const JOB_PATHS: JobPath[] = [
     },
   },
 ];
+
+// Phase 06: مسار محاسب ERP يُضاف بجانب المسار التجريبي (استشاري ERP الوظيفي).
+// الترتيب ثابت: الاستشاري أولًا ثم المحاسب.
+export const JOB_PATHS: JobPath[] = [...pilotPaths, erpAccountantPath];
 
 // قرار الإتاحة (Phase 05.5 / 05.6): تُعرض المسارات ذات الحالة "ready" فقط في الواجهة
 // (الصفحة الرئيسية وصفحة المسارات) عبر READY_JOB_PATHS. تبقى المسارات "planned"

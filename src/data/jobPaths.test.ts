@@ -255,8 +255,8 @@ function collectMcqItems() {
 describe("Phase 05.6 — answer positions (Task 1)", () => {
   const items = collectMcqItems();
 
-  it("covers all 106 MCQ items", () => {
-    expect(items.length).toBe(106);
+  it("covers all 212 MCQ items across the pilot and the accountant path", () => {
+    expect(items.length).toBe(212);
   });
 
   it("keeps every answerIndex within bounds and options aligned across languages", () => {
@@ -547,9 +547,454 @@ describe("Phase 05.6 — planned-path visibility (Task 6)", () => {
     }
   });
 
-  it("does not ship placeholder planned paths in the pilot release", () => {
-    // Phase 05.6 decision: planned paths stay hidden and no placeholder path is added.
+  it("does not ship placeholder planned paths in the release", () => {
+    // Phase 06 decision: both paths are shipped as "ready" and no placeholder path is added.
     expect(JOB_PATHS.filter((p) => p.status === "planned").length).toBe(0);
     expect(JOB_PATHS.length).toBe(READY_JOB_PATHS.length);
   });
 });
+
+// ═══════════════ Phase 06 — مسار محاسب ERP (ERP Accountant) ═══════════════
+
+describe("Phase 06 — erp-accountant path shape", () => {
+  const path = jobPathBySlug("erp-accountant")!;
+
+  it("exists with the expected identity and metadata", () => {
+    expect(path).toBeTruthy();
+    expect(path.id).toBe("job-erp-accountant");
+    expect(path.status).toBe("ready");
+    expect(path.level).toBe("B2");
+    expect(path.titleEn).toBe("ERP Accountant");
+    expect(path.icon).toBeTruthy();
+    expect(path.summaryAr && path.summaryEn, "summary").toBeTruthy();
+    expect(path.descAr && path.descEn, "desc").toBeTruthy();
+    expect(path.learningObjectivesAr.length).toBeGreaterThan(0);
+    expect(path.learningObjectivesAr.length).toBe(path.learningObjectivesEn.length);
+  });
+
+  it("does not link to a career path (ownership boundary)", () => {
+    expect(path.careerPathId).toBeUndefined();
+  });
+
+  it("has exactly 12 lessons ordered 1..12 with the approved slugs", () => {
+    expect(path.lessons.length).toBe(12);
+    path.lessons.forEach((l, i) => {
+      expect(l.order, l.id).toBe(i + 1);
+      expect(l.level, l.id).toBe("B2");
+    });
+    expect(path.lessons.map((l) => l.slug)).toEqual([
+      "understanding-accountant-role",
+      "understanding-chart-of-accounts",
+      "recording-journal-entries",
+      "managing-accounts-payable",
+      "managing-accounts-receivable",
+      "managing-tax-compliance",
+      "performing-bank-reconciliation",
+      "reviewing-general-ledger",
+      "managing-accruals-adjustments",
+      "preparing-monthly-closing",
+      "reviewing-financial-statements",
+      "communicating-accounting-issues",
+    ]);
+  });
+
+  it("is included in the ready set alongside the pilot", () => {
+    expect(READY_JOB_PATHS.map((p) => p.slug).sort()).toEqual(
+      ["erp-accountant", "erp-functional-consultant"].sort()
+    );
+  });
+});
+
+describe("Phase 06 — erp-accountant lesson refs", () => {
+  const path = jobPathBySlug("erp-accountant")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+
+  // Approved reference map (ticket §4). Pinned so a drift of a ref is caught.
+  const EXPECTED_REFS: Record<
+    string,
+    {
+      processIds?: string[];
+      subModuleIds?: string[];
+      businessFunctionIds?: string[];
+      wordIds?: string[];
+      emailLessonSlugs?: string[];
+      meetingLessonSlugs?: string[];
+    }
+  > = {
+    "understanding-accountant-role": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-gl"],
+      wordIds: [
+        "journal-entry",
+        "ledger",
+        "chart-of-accounts",
+        "general-ledger",
+        "accounts-payable",
+        "accounts-receivable",
+      ],
+      meetingLessonSlugs: ["introducing-yourself-role"],
+    },
+    "understanding-chart-of-accounts": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-gl"],
+      businessFunctionIds: ["finance-gl-create-journal"],
+      wordIds: ["chart-of-accounts", "ledger", "cost-center", "general-ledger"],
+    },
+    "recording-journal-entries": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-gl"],
+      businessFunctionIds: ["finance-gl-create-journal", "finance-gl-post-entry"],
+      wordIds: ["journal-entry", "debit", "credit", "post", "voucher"],
+      meetingLessonSlugs: ["asking-for-clarification"],
+    },
+    "managing-accounts-payable": {
+      processIds: ["p2p"],
+      subModuleIds: ["finance-ap", "purchasing-vendor-bills"],
+      businessFunctionIds: ["finance-ap-register-bill", "finance-ap-pay-vendor"],
+      wordIds: [
+        "invoice",
+        "voucher",
+        "three-way-match",
+        "purchase-order",
+        "goods-receipt",
+        "accounts-payable",
+      ],
+      emailLessonSlugs: ["invoice-discrepancy", "supplier-follow-up"],
+    },
+    "managing-accounts-receivable": {
+      processIds: ["o2c"],
+      subModuleIds: ["finance-ar"],
+      businessFunctionIds: ["finance-ar-create-invoice", "finance-ar-receive-payment"],
+      wordIds: ["invoice", "aging", "credit-limit", "accounts-receivable"],
+      emailLessonSlugs: ["payment-reminder", "customer-order-confirmation"],
+    },
+    "managing-tax-compliance": {
+      processIds: [],
+      subModuleIds: ["finance-tax"],
+      businessFunctionIds: [],
+      wordIds: ["fld-tax", "tax-invoice", "vat", "input-tax", "output-tax", "tax-report"],
+      emailLessonSlugs: ["invoice-discrepancy"],
+    },
+    "performing-bank-reconciliation": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-bank"],
+      wordIds: ["reconciliation", "ledger", "audit-trail", "bank-reconciliation"],
+      meetingLessonSlugs: ["problems-action-items"],
+    },
+    "reviewing-general-ledger": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-gl"],
+      businessFunctionIds: ["finance-gl-reverse-entry"],
+      wordIds: ["ledger", "chart-of-accounts", "audit-trail", "post", "general-ledger"],
+      meetingLessonSlugs: ["summarizing-minutes"],
+    },
+    "managing-accruals-adjustments": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-gl", "finance-fixed-assets"],
+      businessFunctionIds: ["assets-depreciation-run"],
+      wordIds: [
+        "accrual",
+        "depreciation",
+        "accumulated-depreciation",
+        "fixed-asset",
+        "useful-life",
+        "prepayment",
+      ],
+      meetingLessonSlugs: ["asking-for-clarification"],
+    },
+    "preparing-monthly-closing": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-closing"],
+      businessFunctionIds: ["finance-closing-close-period"],
+      wordIds: ["reconciliation", "audit-trail", "approval", "fiscal-year", "period-closing"],
+      meetingLessonSlugs: ["summarizing-minutes"],
+    },
+    "reviewing-financial-statements": {
+      processIds: ["r2r"],
+      subModuleIds: ["finance-reporting"],
+      businessFunctionIds: ["finance-reporting-export"],
+      wordIds: [
+        "balance-sheet",
+        "income-statement",
+        "cash-flow",
+        "trial-balance",
+        "financial-statements",
+      ],
+    },
+    "communicating-accounting-issues": {
+      processIds: ["r2r", "p2p"],
+      subModuleIds: ["finance-gl"],
+      businessFunctionIds: [],
+      wordIds: ["stakeholder", "escalation-matrix", "approval", "change-request"],
+      emailLessonSlugs: ["issue-escalation"],
+      meetingLessonSlugs: ["problems-action-items", "summarizing-minutes"],
+    },
+  };
+
+  it("covers all 12 lessons", () => {
+    expect([...bySlug.keys()].sort()).toEqual(Object.keys(EXPECTED_REFS).sort());
+  });
+
+  it("matches the approved reference map exactly", () => {
+    for (const [slug, expected] of Object.entries(EXPECTED_REFS)) {
+      const refs = bySlug.get(slug)!.refs;
+      expect(refs.processIds ?? [], `${slug} processIds`).toEqual(expected.processIds ?? []);
+      expect(refs.subModuleIds ?? [], `${slug} subModuleIds`).toEqual(expected.subModuleIds ?? []);
+      expect(refs.businessFunctionIds ?? [], `${slug} businessFunctionIds`).toEqual(
+        expected.businessFunctionIds ?? []
+      );
+      expect(refs.wordIds ?? [], `${slug} wordIds`).toEqual(expected.wordIds ?? []);
+      expect(refs.emailLessonSlugs ?? [], `${slug} emailLessonSlugs`).toEqual(
+        expected.emailLessonSlugs ?? []
+      );
+      expect(refs.meetingLessonSlugs ?? [], `${slug} meetingLessonSlugs`).toEqual(
+        expected.meetingLessonSlugs ?? []
+      );
+    }
+  });
+
+  it("keeps every word ref resolvable through wordById", () => {
+    for (const [slug, expected] of Object.entries(EXPECTED_REFS)) {
+      for (const id of expected.wordIds ?? []) {
+        expect(wordById(id), `${slug} → word ${id}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("never references the inventory-scoped adjustment word", () => {
+    for (const l of path.lessons) {
+      expect(l.refs.wordIds ?? [], l.id).not.toContain("adjustment");
+      for (const q of [...(l.practice.mcqs ?? []), ...l.quiz]) {
+        expect(q.wordId, q.id).not.toBe("adjustment");
+      }
+    }
+    for (const q of path.assessment.quiz) {
+      expect(q.wordId, q.id).not.toBe("adjustment");
+    }
+  });
+});
+
+describe("Phase 06 — erp-accountant practice shape", () => {
+  const path = jobPathBySlug("erp-accountant")!;
+
+  it("gives every lesson 2 MCQs, 1 response, a 5-step ordering and 2 phrases", () => {
+    for (const l of path.lessons) {
+      expect(l.practice.mcqs?.length, `${l.id} mcqs`).toBe(2);
+      expect(l.practice.responses?.length, `${l.id} responses`).toBe(1);
+      expect(l.practice.order?.length, `${l.id} order`).toBe(5);
+      expect(l.practice.phrases?.length, `${l.id} phrases`).toBe(2);
+    }
+  });
+
+  it("gives every lesson a 5-question quiz with complete bilingual options", () => {
+    for (const l of path.lessons) {
+      expect(l.quiz.length, `${l.id} quiz`).toBe(5);
+      for (const q of l.quiz) {
+        expect(q.promptAr && q.promptEn, q.id).toBeTruthy();
+        expect(q.optionsAr.length, q.id).toBe(q.optionsEn.length);
+        expect(q.optionsAr.length, q.id).toBeGreaterThan(1);
+      }
+    }
+  });
+});
+
+describe("Phase 06 — erp-accountant assessment coverage", () => {
+  const path = jobPathBySlug("erp-accountant")!;
+  const assessment = path.assessment;
+
+  // Approved coverage map: 8 MCQs sample L1–L8, the 2 written responses cover
+  // L9 and L12, and the 3 speaking phrases cover L10, L11 and L7+L12.
+  const LESSON_BY_QUESTION: Record<string, number> = {
+    "ja-assess-q1": 1,
+    "ja-assess-q2": 2,
+    "ja-assess-q3": 3,
+    "ja-assess-q4": 4,
+    "ja-assess-q5": 5,
+    "ja-assess-q6": 6,
+    "ja-assess-q7": 7,
+    "ja-assess-q8": 8,
+  };
+
+  it("has 8 MCQs covering lessons 1–8 exactly once", () => {
+    const ids = assessment.quiz.map((q) => q.id).sort();
+    expect(ids).toEqual(Object.keys(LESSON_BY_QUESTION).sort());
+    const lessons = Object.values(LESSON_BY_QUESTION);
+    expect(new Set(lessons).size).toBe(lessons.length);
+    for (const n of lessons) {
+      expect(n).toBeGreaterThanOrEqual(1);
+      expect(n).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it("has 2 written responses and 3 speaking phrases (13 activities total)", () => {
+    expect(assessment.quiz.length).toBe(8);
+    expect((assessment.responses ?? []).length).toBe(2);
+    expect((assessment.speaking ?? []).length).toBe(3);
+    expect(
+      assessment.quiz.length + (assessment.responses ?? []).length + (assessment.speaking ?? []).length
+    ).toBe(13);
+  });
+
+  it("covers lessons 9 and 12 through the written responses", () => {
+    expect((assessment.responses ?? []).map((r) => r.id).sort()).toEqual(
+      ["ja-assess-rs1", "ja-assess-rs2"].sort()
+    );
+  });
+
+  it("does not repeat the same correct answer text within the MCQs", () => {
+    const answers = assessment.quiz.map((q) => q.optionsEn[q.answerIndex]);
+    expect(new Set(answers).size).toBe(answers.length);
+  });
+});
+
+describe("Phase 06 — erp-accountant assessment semantic answer keys", () => {
+  const path = jobPathBySlug("erp-accountant")!;
+  const assessment = path.assessment;
+  const byId = new Map(assessment.quiz.map((q) => [q.id, q]));
+
+  const ANSWER_KEY: Record<string, { en: string; ar: string; lesson: string }> = {
+    "ja-assess-q1": {
+      en: "Recording and reviewing accounting transactions and preparing reports.",
+      ar: "تسجيل ومراجعة الحركات المحاسبية وتجهيز التقارير.",
+      lesson: "L1 understanding the accountant's role",
+    },
+    "ja-assess-q2": {
+      en: "An organised list of all accounts so transactions are recorded in the right account.",
+      ar: "قائمة منظّمة بكل الحسابات لتسجيل الحركات على الحساب الصحيح.",
+      lesson: "L2 chart of accounts",
+    },
+    "ja-assess-q3": {
+      en: "Total debits must equal total credits.",
+      ar: "أن يتساوى إجمالي المدين مع إجمالي الدائن.",
+      lesson: "L3 recording journal entries",
+    },
+    "ja-assess-q4": {
+      en: "Matching the invoice with the purchase order and goods receipt before payment.",
+      ar: "مطابقة الفاتورة بأمر الشراء وإيصال الاستلام قبل الدفع.",
+      lesson: "L4 accounts payable",
+    },
+    "ja-assess-q5": {
+      en: "To track overdue amounts and reduce the risk of non-collection.",
+      ar: "لمتابعة المتأخرات وتقليل مخاطر عدم التحصيل.",
+      lesson: "L5 accounts receivable",
+    },
+    "ja-assess-q6": {
+      en: "Output tax.",
+      ar: "ضريبة المخرجات.",
+      lesson: "L6 tax compliance",
+    },
+    "ja-assess-q7": {
+      en: "Comparing the bank statement with the general ledger and explaining the differences.",
+      ar: "مقارنة كشف البنك مع دفتر الأستاذ وتفسير الفروقات.",
+      lesson: "L7 bank reconciliation",
+    },
+    "ja-assess-q8": {
+      en: "Reverse it with an entry, then post the correct one.",
+      ar: "نعكسه بقيد ثم نرحّل القيد الصحيح.",
+      lesson: "L8 reviewing the general ledger",
+    },
+  };
+
+  it("covers the eight assessment questions exactly", () => {
+    expect([...byId.keys()].sort()).toEqual(Object.keys(ANSWER_KEY).sort());
+  });
+
+  it("resolves every answerIndex to the intended English answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.answerIndex, `${id} bounds`).toBeGreaterThanOrEqual(0);
+      expect(q.answerIndex, `${id} bounds`).toBeLessThan(q.optionsEn.length);
+      expect(q.optionsEn[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.en);
+    }
+  });
+
+  it("resolves every answerIndex to the intended Arabic answer text", () => {
+    for (const [id, expected] of Object.entries(ANSWER_KEY)) {
+      const q = byId.get(id)!;
+      expect(q.optionsAr[q.answerIndex], `${id} (${expected.lesson})`).toBe(expected.ar);
+    }
+  });
+
+  it("keeps every option distinct in both languages", () => {
+    for (const q of assessment.quiz) {
+      expect(q.optionsAr.length, `${q.id} length`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsEn).size, `${q.id} en distinct`).toBe(q.optionsEn.length);
+      expect(new Set(q.optionsAr).size, `${q.id} ar distinct`).toBe(q.optionsAr.length);
+    }
+  });
+
+  it("keeps explanations non-empty and in the matching language", () => {
+    const ARABIC_RE = /[\u0600-\u06FF]/;
+    for (const q of assessment.quiz) {
+      const explainEn = q.explainEn ?? "";
+      const explainAr = q.explainAr ?? "";
+      expect(explainEn.length, `${q.id} explainEn`).toBeGreaterThan(0);
+      expect(explainAr.length, `${q.id} explainAr`).toBeGreaterThan(0);
+      expect(ARABIC_RE.test(explainAr), `${q.id} explainAr is Arabic`).toBe(true);
+      expect(ARABIC_RE.test(explainEn), `${q.id} explainEn is not Arabic`).toBe(false);
+    }
+  });
+
+  it("keeps the written responses bilingual and well-formed", () => {
+    for (const r of assessment.responses ?? []) {
+      expect(r.situationAr && r.situationEn, r.id).toBeTruthy();
+      expect(r.optionsAr.length, r.id).toBe(r.optionsEn.length);
+      expect(r.answerIndex, r.id).toBeGreaterThanOrEqual(0);
+      expect(r.answerIndex, r.id).toBeLessThan(r.optionsAr.length);
+    }
+  });
+
+  it("keeps the speaking phrases bilingual with tips", () => {
+    for (const s of assessment.speaking ?? []) {
+      expect(s.en && s.ar, s.id).toBeTruthy();
+      expect(s.tipAr && s.tipEn, s.id).toBeTruthy();
+    }
+  });
+});
+
+describe("Phase 06 — erp-accountant ownership boundaries", () => {
+  const path = jobPathBySlug("erp-accountant")!;
+  const bySlug = new Map(path.lessons.map((l) => [l.slug, l]));
+
+  it("keeps AP owns vendor invoices and AR owns customer invoices", () => {
+    const ap = bySlug.get("managing-accounts-payable")!;
+    const ar = bySlug.get("managing-accounts-receivable")!;
+    expect(ap.refs.processIds).toEqual(["p2p"]);
+    expect(ap.refs.emailLessonSlugs).toContain("invoice-discrepancy");
+    expect(ar.refs.processIds).toEqual(["o2c"]);
+    expect(ar.refs.emailLessonSlugs).toContain("payment-reminder");
+    // AR must not pull in AP-only business functions and vice versa.
+    expect(ipLocal(ar.refs.businessFunctionIds)).not.toContain("finance-ap-pay-vendor");
+    expect(ipLocal(ap.refs.businessFunctionIds)).not.toContain("finance-ar-receive-payment");
+  });
+
+  it("keeps journal entries (creating/posting) separate from GL review (reversal)", () => {
+    const je = bySlug.get("recording-journal-entries")!;
+    const gl = bySlug.get("reviewing-general-ledger")!;
+    expect(je.refs.businessFunctionIds).toEqual([
+      "finance-gl-create-journal",
+      "finance-gl-post-entry",
+    ]);
+    expect(gl.refs.businessFunctionIds).toEqual(["finance-gl-reverse-entry"]);
+  });
+
+  it("keeps accruals (estimates) separate from monthly closing (close process)", () => {
+    const accr = bySlug.get("managing-accruals-adjustments")!;
+    const close = bySlug.get("preparing-monthly-closing")!;
+    expect(accr.refs.subModuleIds).toContain("finance-fixed-assets");
+    expect(accr.refs.businessFunctionIds).toEqual(["assets-depreciation-run"]);
+    expect(close.refs.businessFunctionIds).toEqual(["finance-closing-close-period"]);
+  });
+
+  it("keeps tax scope generic (no country-specific business function or advice)", () => {
+    const tax = bySlug.get("managing-tax-compliance")!;
+    expect(tax.refs.businessFunctionIds ?? []).toEqual([]);
+    expect(tax.refs.processIds ?? []).toEqual([]);
+  });
+});
+
+// Tiny local helper: normalise an optional string[] to [] for safe `.toContain`.
+function ipLocal(arr: string[] | undefined): string[] {
+  return arr ?? [];
+}
+

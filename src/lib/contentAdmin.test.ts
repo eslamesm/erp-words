@@ -40,8 +40,8 @@ describe("reviewCounts on real content", () => {
     expect(counts.total).toBe(WORDS.length);
   });
 
-  it("reports the current split (156 reviewed / 264 auto / 0 needs-review)", () => {
-    expect(counts.reviewed).toBe(156);
+  it("reports the current split (169 reviewed / 264 auto / 0 needs-review)", () => {
+    expect(counts.reviewed).toBe(169);
     expect(counts.auto).toBe(264);
     expect(counts.needsReview).toBe(0);
   });

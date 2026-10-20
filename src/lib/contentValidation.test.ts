@@ -39,12 +39,9 @@ describe("contentValidation", () => {
     expect(unused.length).toBe(report.stats.unusedOverrides);
     expect(unused.map((w) => w.id).sort()).toEqual(
       [
-        "accounts-payable",
-        "accounts-receivable",
         "bill-of-materials",
         "credit-note",
         "debit-note",
-        "general-ledger",
         "payslip",
         "requisition",
         "service-level-agreement",

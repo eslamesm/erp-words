@@ -61,6 +61,16 @@ export const WORD_CLASSIFICATION: Record<
   accrual: { subModuleId: "finance-gl", category: "term" },
   "accounts-receivable": { subModuleId: "finance-ar", category: "term" },
   "accounts-payable": { subModuleId: "finance-ap", category: "term" },
+  "financial-statements": { subModuleId: "finance-reporting", category: "report" },
+  "fiscal-year": { subModuleId: "finance-closing", category: "term" },
+  prepayment: { subModuleId: "finance-gl", category: "term" },
+  "period-closing": { subModuleId: "finance-closing", category: "action" },
+  "bank-reconciliation": { subModuleId: "finance-bank", category: "action" },
+  "tax-invoice": { subModuleId: "finance-tax", category: "document" },
+  vat: { subModuleId: "finance-tax", category: "term" },
+  "input-tax": { subModuleId: "finance-tax", category: "term" },
+  "output-tax": { subModuleId: "finance-tax", category: "term" },
+  "tax-report": { subModuleId: "finance-tax", category: "report" },
   "fixed-asset": { subModuleId: "assets-registration", category: "term" },
 
   // Sales
