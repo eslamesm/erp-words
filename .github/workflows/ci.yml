@@ -13,6 +13,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run check:route-index
       - run: npm run lint
       - run: npm test
+      - run: npx tsc --noEmit
       - run: npm run build
+      - run: npm run smoke:routes
+        env:
+          SMOKE_PORT: "3310"

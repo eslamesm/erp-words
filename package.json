@@ -12,7 +12,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "gen:route-index": "node scripts/generate-job-route-index.mjs",
+    "check:route-index": "node scripts/generate-job-route-index.mjs --check",
+    "smoke:routes": "node scripts/smoke-job-routes.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
