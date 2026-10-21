@@ -23,6 +23,10 @@ const PLANNED_SLUG = "warehouse-officer";
 // A lesson slug that is genuinely valid for the planned path (not a typo).
 const plannedLessonSlug = jobLessonSlugs(jobPathBySlug(PLANNED_SLUG)!)[0];
 
+// Released in Phase 10.3: its lesson route must now resolve.
+const PROCUREMENT_SLUG = "procurement-specialist";
+const procurementLessonSlug = jobLessonSlugs(readyJobPathBySlug(PROCUREMENT_SLUG)!)[0];
+
 function callPage(jobSlug: string, lessonSlug: string) {
   return JobLessonSlugPage({ params: Promise.resolve({ jobSlug, lessonSlug }) });
 }
@@ -30,6 +34,11 @@ function callPage(jobSlug: string, lessonSlug: string) {
 describe("Phase 10.2A — lesson route readiness gate", () => {
   it("serves a ready path with a valid lesson slug", async () => {
     const element = await callPage(READY_SLUG, readyLessonSlug);
+    expect(element).toBeTruthy();
+  });
+
+  it("serves the released procurement path with a valid lesson slug", async () => {
+    const element = await callPage(PROCUREMENT_SLUG, procurementLessonSlug);
     expect(element).toBeTruthy();
   });
 

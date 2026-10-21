@@ -11,7 +11,7 @@ export const procurementSpecialistPath: JobPath = {
   id: "job-procurement-specialist",
   slug: "procurement-specialist",
   icon: "🛒",
-  status: "planned",
+  status: "ready",
   level: "B2",
   titleAr: "أخصائي المشتريات",
   titleEn: "Procurement Specialist",

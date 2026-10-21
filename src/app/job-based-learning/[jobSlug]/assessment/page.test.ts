@@ -12,7 +12,7 @@ import { READY_JOB_PATHS } from "@/data/jobPaths";
 // The exact digest Next.js attaches to notFound() (see next/dist/client/components/not-found).
 const NOT_FOUND_DIGEST = "NEXT_HTTP_ERROR_FALLBACK;404";
 
-const PLANNED_SLUGS = ["procurement-specialist", "manufacturing-planner", "warehouse-officer"];
+const PLANNED_SLUGS = ["manufacturing-planner", "warehouse-officer"];
 
 function callPage(jobSlug: string) {
   return JobAssessmentSlugPage({ params: Promise.resolve({ jobSlug }) });
@@ -24,6 +24,11 @@ describe("Phase 10.2A — assessment route readiness gate", () => {
       const element = await callPage(path.slug);
       expect(element, path.slug).toBeTruthy();
     }
+  });
+
+  it("serves the released procurement path assessment route", async () => {
+    const element = await callPage("procurement-specialist");
+    expect(element).toBeTruthy();
   });
 
   for (const slug of PLANNED_SLUGS) {

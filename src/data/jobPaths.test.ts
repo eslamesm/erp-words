@@ -571,20 +571,23 @@ describe("Phase 05.6 — planned-path visibility (Task 6)", () => {
   });
 
   it("pins the exact planned-path slug set", () => {
-    // Three planned paths ship in Phase 07/08/09: procurement-specialist,
-    // manufacturing-planner and warehouse-officer.
+    // Procurement-specialist was released in Phase 10.3; manufacturing-planner
+    // and warehouse-officer remain planned.
     // Assert the SET (not just a count) so no unexpected planned path is accepted.
     const planned = JOB_PATHS.filter((p) => p.status === "planned").map((p) => p.slug).sort();
     expect(planned).toEqual([
       "manufacturing-planner",
-      "procurement-specialist",
       "warehouse-officer",
     ]);
   });
 
   it("pins the exact ready-path slug set", () => {
     const ready = READY_JOB_PATHS.map((p) => p.slug).sort();
-    expect(ready).toEqual(["erp-accountant", "erp-functional-consultant"]);
+    expect(ready).toEqual([
+      "erp-accountant",
+      "erp-functional-consultant",
+      "procurement-specialist",
+    ]);
   });
 
   it("keeps planned paths out of the shipped release", () => {
@@ -595,8 +598,6 @@ describe("Phase 05.6 — planned-path visibility (Task 6)", () => {
     for (const p of planned) {
       expect(READY_JOB_PATHS.some((r) => r.slug === p.slug), p.id).toBe(false);
     }
-    // Procurement ships as planned and must not be reachable through the ready set.
-    expect(READY_JOB_PATHS.some((r) => r.slug === "procurement-specialist")).toBe(false);
   });
 });
 
@@ -610,11 +611,16 @@ describe("Phase 07.4.2 — readyJobPathBySlug readiness gate", () => {
     expect(consultant!.status).toBe("ready");
   });
 
-  it("returns undefined for the planned procurement path", () => {
-    expect(readyJobPathBySlug("procurement-specialist")).toBeUndefined();
-    // The gate must not be what makes procurement invisible: it stays in JOB_PATHS.
-    expect(jobPathBySlug("procurement-specialist")).toBeDefined();
-    expect(jobPathBySlug("procurement-specialist")!.status).toBe("planned");
+  it("returns undefined for a still-planned path", () => {
+    expect(readyJobPathBySlug("manufacturing-planner")).toBeUndefined();
+    // The gate must not be what makes a planned path invisible: it stays in JOB_PATHS.
+    expect(jobPathBySlug("manufacturing-planner")).toBeDefined();
+    expect(jobPathBySlug("manufacturing-planner")!.status).toBe("planned");
+  });
+
+  it("now resolves the released procurement path", () => {
+    expect(readyJobPathBySlug("procurement-specialist")).toBeDefined();
+    expect(readyJobPathBySlug("procurement-specialist")!.status).toBe("ready");
   });
 
   it("returns undefined for unknown slugs", () => {
@@ -685,7 +691,7 @@ describe("Phase 06 — erp-accountant path shape", () => {
 
   it("is included in the ready set alongside the pilot", () => {
     expect(READY_JOB_PATHS.map((p) => p.slug).sort()).toEqual(
-      ["erp-accountant", "erp-functional-consultant"].sort()
+      ["erp-accountant", "erp-functional-consultant", "procurement-specialist"].sort()
     );
   });
 });
@@ -1087,7 +1093,7 @@ describe("Phase 07 — procurement-specialist path shape", () => {
     expect(path).toBeTruthy();
     expect(path.id).toBe("job-procurement-specialist");
     expect(path.slug).toBe("procurement-specialist");
-    expect(path.status).toBe("planned");
+    expect(path.status).toBe("ready");
     expect(path.level).toBe("B2");
     expect(path.titleEn).toBe("Procurement Specialist");
     expect(path.icon).toBeTruthy();
@@ -1123,9 +1129,9 @@ describe("Phase 07 — procurement-specialist path shape", () => {
     ]);
   });
 
-  it("remains planned and is not exposed as a ready path", () => {
-    expect(path.status).toBe("planned");
-    expect(READY_JOB_PATHS.some((p) => p.slug === "procurement-specialist")).toBe(false);
+  it("is released and exposed as a ready path", () => {
+    expect(path.status).toBe("ready");
+    expect(READY_JOB_PATHS.some((p) => p.slug === "procurement-specialist")).toBe(true);
   });
 });
 
