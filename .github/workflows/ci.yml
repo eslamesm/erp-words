@@ -16,6 +16,7 @@ jobs:
       - run: npm run check:route-index
       - run: npm run lint
       - run: npm test
+      - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npm run build
       - run: npm run smoke:routes
