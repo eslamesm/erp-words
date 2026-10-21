@@ -4,12 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MODULES } from "@/data/modules";
 import { WORDS } from "@/data/words";
+import { ProcessCards } from "@/components/processes/ProcessCards";
+import { ProEngUnitCards } from "@/components/emails/ProEngUnitCards";
+import { JobPathCards } from "@/components/jobs/JobPathCards";
 import { isDue } from "@/lib/srs";
 import { useProgress } from "@/hooks/useProgress";
 import { Onboarding } from "@/components/Onboarding";
 import { HomeScreen } from "@/components/ui/HomeScreen";
 import { gamificationLevel, MOTIVATIONAL, MOTIVATIONAL_EN, PLAN_META, reviewsToday } from "@/lib/plan";
 import { useT } from "@/hooks/useT";
+import { READY_JOB_PATHS } from "@/data/jobPaths";
 
 const FEATURE_HREF: Record<string, string> = {
   smart: "/assistant",
@@ -246,7 +250,7 @@ export default function HomePage() {
           const masteredCount = words.filter((w) => (progress[w.id]?.lapses ?? 0) >= 3).length;
           const pct = words.length ? Math.round((masteredCount / words.length) * 100) : 0;
           return { m, words: words.length, mastered: masteredCount, pct };
-        });
+        }).filter((x) => x.words > 0);
         const totalWords = weights.reduce((s, x) => s + x.words, 0);
         const overall = totalWords ? Math.round((weights.reduce((s, x) => s + x.mastered, 0) / totalWords) * 100) : 0;
         return (
@@ -316,7 +320,7 @@ export default function HomePage() {
       <section>
         <h2 className="mb-4 text-xl font-bold">{t("home.modulesTitle")}</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {MODULES.map((m) => {
+          {MODULES.filter((m) => WORDS.some((w) => w.module === m.id)).map((m) => {
             const count = WORDS.filter((w) => w.module === m.id).length;
             return (
               <Link
@@ -338,6 +342,54 @@ export default function HomePage() {
             );
           })}
         </div>
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold">🔗 {t("process.homeTitle")}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("process.homeSubtitle")}</p>
+          </div>
+          <Link
+            href="/processes"
+            className="shrink-0 text-sm font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            {t("process.backToIndex")}
+          </Link>
+        </div>
+        <ProcessCards />
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold">🌐 {t("proeng.homeTitle")}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("proeng.homeSubtitle")}</p>
+          </div>
+          <Link
+            href="/professional-english"
+            className="shrink-0 text-sm font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            {t("proeng.backToIndex")}
+          </Link>
+        </div>
+        <ProEngUnitCards />
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold">💼 {t("job.title")}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("job.subtitle")}</p>
+          </div>
+          <Link
+            href="/job-based-learning"
+            className="shrink-0 text-sm font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            {t("job.backToPaths")}
+          </Link>
+        </div>
+        <JobPathCards paths={READY_JOB_PATHS} />
       </section>
     </div>
   );

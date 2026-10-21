@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { Level, ModuleId, Word, WordProgress } from "@/types";
 import { MODULES } from "@/data/modules";
+import { subModulesByModule } from "@/data/subModules";
 import { WORDS } from "@/data/words";
 import { useProgress } from "@/hooks/useProgress";
 import { LevelBadge, ModuleBadge, PoS } from "@/components/Badges";
@@ -39,6 +40,7 @@ function WordsContent() {
   const searchParams = useSearchParams();
   const initialModule = (searchParams.get("module") as ModuleId | null) ?? "all";
   const [module, setModule] = useState<ModuleId | "all">(initialModule);
+  const [subModule, setSubModule] = useState<string | "all">("all");
   const [level, setLevel] = useState<Level | "all">("all");
   const [pos, setPos] = useState<"all" | "verb" | "noun">("all");
   const [query, setQuery] = useState("");
@@ -51,6 +53,7 @@ function WordsContent() {
   const words = useMemo(() => {
     return WORDS.filter((w) => {
       if (module !== "all" && w.module !== module) return false;
+      if (subModule !== "all" && w.subModuleId !== subModule) return false;
       if (level !== "all" && w.level !== level) return false;
       if (pos !== "all" && posCategory(w.partOfSpeech) !== pos) return false;
       if (onlySaved && !bookmarks.includes(w.id)) return false;
@@ -61,7 +64,7 @@ function WordsContent() {
       }
       return true;
     });
-  }, [module, level, pos, query, onlySaved, bookmarks]);
+  }, [module, subModule, level, pos, query, onlySaved, bookmarks]);
 
   const grouped = useMemo(() => {
     const groups = new Map<ModuleId, Word[]>();
@@ -110,21 +113,48 @@ function WordsContent() {
 
       <div className="flex flex-wrap items-center gap-2">
         <button
-          onClick={() => setModule("all")}
+          onClick={() => {
+            setModule("all");
+            setSubModule("all");
+          }}
           className={`${levelChip} ${module === "all" ? levelOn : levelOff}`}
         >
           الكل
         </button>
-        {MODULES.map((m) => (
+        {MODULES.filter((m) => WORDS.some((w) => w.module === m.id)).map((m) => (
           <button
             key={m.id}
-            onClick={() => setModule(m.id)}
+            onClick={() => {
+              setModule(m.id);
+              setSubModule("all");
+            }}
             className={`${levelChip} ${module === m.id ? levelOn : levelOff}`}
           >
             {m.icon} {m.labelAr}
           </button>
         ))}
       </div>
+
+      {module !== "all" && subModulesByModule(module).length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">الوحدة الفرعية:</span>
+          <button
+            onClick={() => setSubModule("all")}
+            className={`${levelChip} ${subModule === "all" ? levelOn : levelOff}`}
+          >
+            الكل
+          </button>
+          {subModulesByModule(module).map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setSubModule(s.id)}
+              className={`${levelChip} ${subModule === s.id ? levelOn : levelOff}`}
+            >
+              {s.labelAr}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">المستوى:</span>

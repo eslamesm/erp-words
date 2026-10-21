@@ -7,6 +7,8 @@ export const PACK_TAX: GlossaryPack = {
   titleEn: "Tax & e-invoicing",
   descAr: "القيمة المضافة والفوترة الإلكترونية والإقرارات الضريبية.",
   descEn: "VAT, e-invoicing, tax returns, and compliance terms.",
+  moduleId: "finance",
+  subModuleId: "finance-gl",
   terms: [
     { en: "value added tax", ar: "ضريبة القيمة المضافة", note: "ضريبة غير مباشرة على السلع والخدمات.", exampleEn: "The price excludes value added tax.", exampleAr: "السعر لا يشمل ضريبة القيمة المضافة." },
     { en: "tax invoice", ar: "فاتورة ضريبية", note: "فاتورة مطابقة للمتطلبات الضريبية.", exampleEn: "Please issue a tax invoice for the order.", exampleAr: "يرجى إصدار فاتورة ضريبية للطلب." },
@@ -33,6 +35,8 @@ export const PACK_GOVERNANCE: GlossaryPack = {
   titleEn: "Governance & controls",
   descAr: "فصل المهام والصلاحيات والتدقيق الداخلي وإدارة المخاطر.",
   descEn: "Segregation of duties, access rights, internal audit, and risk management.",
+  moduleId: "management",
+  subModuleId: "management-governance",
   terms: [
     { en: "segregation of duties", ar: "فصل المهام", note: "توزيع المهام لمنع التلاعب.", exampleEn: "Segregation of duties prevents fraud.", exampleAr: "يمنع فصل المهام الاحتيال." },
     { en: "internal audit", ar: "التدقيق الداخلي", note: "فحص مستقل للعمليات والرقابة.", exampleEn: "Internal audit reviewed the procurement process.", exampleAr: "راجع التدقيق الداخلي عملية الشراء." },
@@ -58,6 +62,8 @@ export const PACK_INFOSEC: GlossaryPack = {
   titleEn: "Information security",
   descAr: "الأدوار والوصول والتشفير وسجلات التدقيق.",
   descEn: "Roles, access, encryption, and audit logs.",
+  moduleId: "it",
+  subModuleId: "it-security",
   terms: [
     { en: "role-based access control", ar: "التحكم بالوصول حسب الدور", note: "منح الصلاحيات حسب الوظيفة.", exampleEn: "Role-based access control limits sensitive screens.", exampleAr: "يحدّ التحكم حسب الدور من الوصول للشاشات الحساسة." },
     { en: "authentication", ar: "التحقق من الهوية", note: "التأكد من أن المستخدم من يدّعي.", exampleEn: "Authentication is required before login.", exampleAr: "التحقق من الهوية مطلوب قبل الدخول." },
@@ -84,6 +90,8 @@ export const PACK_TESTING: GlossaryPack = {
   titleEn: "Testing & implementation",
   descAr: "اختبارات القبول وحالات الاختبار والعيوب وبيئات التشغيل.",
   descEn: "UAT, test cases, defects, and go-live environments.",
+  moduleId: "it",
+  subModuleId: "it-testing",
   terms: [
     { en: "user acceptance testing", ar: "اختبار قبول المستخدم", note: "اختبار نهائي يتحقق من مطابقة المتطلبات.", exampleEn: "User acceptance testing starts next Monday.", exampleAr: "يبدأ اختبار قبول المستخدم الاثنين القادم." },
     { en: "test case", ar: "حالة الاختبار", note: "خطوات ونتيجة متوقعة لسيناريو محدد.", exampleEn: "Write a test case for the login screen.", exampleAr: "اكتب حالة اختبار لشاشة الدخول." },

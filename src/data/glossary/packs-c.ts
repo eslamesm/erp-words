@@ -7,6 +7,8 @@ export const PACK_LOGISTICS: GlossaryPack = {
   titleEn: "Logistics & shipping",
   descAr: "SKU والمستودعات والشحن الجوي والبحري وشروط التجارة الدولية.",
   descEn: "SKU, warehouses, air and sea freight, and international trade terms.",
+  moduleId: "scm",
+  subModuleId: "scm-supply-planning",
   terms: [
     { en: "stock keeping unit", ar: "وحدة حفظ المخزون", note: "معرّف فريد لكل صنف.", exampleEn: "Each size has its own stock keeping unit.", exampleAr: "لكل مقاس وحدة حفظ مخزون خاصة به." },
     { en: "warehouse", ar: "المستودع", note: "مكان تخزين البضاعة.", exampleEn: "The goods are stored in the main warehouse.", exampleAr: "تُخزَّن البضاعة في المستودع الرئيسي." },
@@ -33,6 +35,8 @@ export const PACK_NUMBERS: GlossaryPack = {
   titleEn: "Numbers & measures",
   descAr: "تدريب استماع على نطق الأرقام والكسور والعملات والنسب والتواريخ.",
   descEn: "Listening drill for numbers, fractions, currencies, percentages, and dates.",
+  moduleId: "general",
+  subModuleId: "general-numbers",
   terms: [
     { en: "one thousand two hundred fifty", ar: "1,250", note: "ألف ومئتان وخمسون." },
     { en: "twelve point five percent", ar: "12.5%", note: "اثنا عشر فاصلة خمسة بالمئة." },
@@ -59,6 +63,8 @@ export const PACK_INTERVIEWS: GlossaryPack = {
   titleEn: "Job interviews",
   descAr: "أسئلة شائعة في المقابلات مع إجابات نموذجية بالإنجليزية.",
   descEn: "Common interview questions with model answers in English.",
+  moduleId: "general",
+  subModuleId: "general-business",
   terms: [
     { en: "Tell me about yourself.", ar: "حدّثني عن نفسك.", note: "ابدأ بالخبرة الحالية ثم إنجاز ثم سبب التقديم.", exampleEn: "I am an ERP accountant with five years of experience in finance modules, and I recently led a successful system migration.", exampleAr: "أنا محاسب ERP بخبرة خمس سنوات في وحدات المالية، وقد قدت مؤخرًا ترحيل نظام ناجح." },
     { en: "What are your strengths?", ar: "ما هي نقاط قوتك؟", exampleEn: "My strength is turning complex data into clear reports that help managers decide faster.", exampleAr: "نقطة قوتي هي تحويل البيانات المعقدة إلى تقارير واضحة تساعد المديرين على اتخاذ القرار أسرع." },

@@ -7,6 +7,8 @@ export const PACK_ROLES: GlossaryPack = {
   titleEn: "Job roles",
   descAr: "مفردات الأدوار الأساسية في المالية والمخزون والمشتريات والإدارة.",
   descEn: "Core vocabulary for roles in finance, inventory, purchasing, and management.",
+  moduleId: "hr",
+  subModuleId: "hr-recruitment",
   terms: [
     { en: "accounts payable accountant", ar: "محاسب الحسابات الدائنة", note: "يتابع مستحقات المورّدين ويسدد الفواتير.", exampleEn: "The accounts payable accountant processed the supplier invoices.", exampleAr: "عالج محاسب الحسابات الدائنة فواتير المورّدين." },
     { en: "accounts receivable accountant", ar: "محاسب الحسابات المدينة", note: "يتابع تحصيل المبالغ من العملاء.", exampleEn: "The AR accountant followed up on overdue balances.", exampleAr: "تابع محاسب الحسابات المدينة الأرصدة المتأخرة." },
@@ -30,6 +32,8 @@ export const PACK_ERP_MODULES: GlossaryPack = {
   titleEn: "ERP modules",
   descAr: "أسماء وحدات النظام الأساسية ورموزها القياسية (GL، AP، AR…).",
   descEn: "Standard ERP module names and their common abbreviations (GL, AP, AR…).",
+  moduleId: "general",
+  subModuleId: "general-business",
   terms: [
     { en: "general ledger", ar: "دفتر الأستاذ العام", note: "السجل الرئيسي لكل القيود المحاسبية.", exampleEn: "All transactions are posted to the general ledger.", exampleAr: "تُرحَّل كل المعاملات إلى دفتر الأستاذ العام." },
     { en: "accounts payable", ar: "الحسابات الدائنة", note: "المبالغ المستحقة للمورّدين.", exampleEn: "Accounts payable increased this quarter.", exampleAr: "زادت الحسابات الدائنة هذا الربع." },
@@ -57,6 +61,8 @@ export const PACK_REPORTING: GlossaryPack = {
   titleEn: "Reporting & analysis",
   descAr: "القوائم المالية والموازنات والمؤشرات وتحليل الانحرافات.",
   descEn: "Financial statements, budgets, KPIs, and variance analysis.",
+  moduleId: "bi",
+  subModuleId: "bi-reports",
   terms: [
     { en: "profit and loss statement", ar: "قائمة الأرباح والخسائر", note: "الإيرادات مقابل المصروفات خلال فترة.", exampleEn: "The profit and loss statement shows a strong quarter.", exampleAr: "تُظهر قائمة الأرباح والخسائر ربعًا قويًا." },
     { en: "balance sheet", ar: "الميزانية العمومية", note: "الأصول والخصوم وحقوق الملكية في تاريخ محدد.", exampleEn: "The balance sheet must always balance.", exampleAr: "يجب أن تتوازن الميزانية العمومية دائمًا." },
@@ -83,6 +89,8 @@ export const PACK_CONTRACTS: GlossaryPack = {
   titleEn: "Contracts & commitment",
   descAr: "مفردات العقود: الدفع، الجزاء، الفسخ، التسليم، والضمان.",
   descEn: "Contract vocabulary: payment, penalties, termination, delivery, and warranty.",
+  moduleId: "documents",
+  subModuleId: "documents-repository",
   terms: [
     { en: "payment terms", ar: "شروط الدفع", note: "المدة وطريقة سداد المستحقات.", exampleEn: "The payment terms are sixty days from invoice.", exampleAr: "شروط الدفع ستون يومًا من تاريخ الفاتورة." },
     { en: "penalty clause", ar: "شرط الجزاء", note: "غرامة عند الإخلال بالالتزام.", exampleEn: "The penalty clause applies to late delivery.", exampleAr: "ينطبق شرط الجزاء على التأخر في التسليم." },
