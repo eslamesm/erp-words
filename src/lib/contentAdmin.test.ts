@@ -30,6 +30,15 @@ describe("contentAdmin review filter", () => {
     expect(filterWords(words, { category: "action" }).map((x) => x.id)).toEqual(["b"]);
     expect(filterWords(words, { query: "b" }).map((x) => x.id)).toEqual(["b"]);
   });
+
+  it("filters actual Batch B words by approved module and submodule", () => {
+    expect(filterWords(WORDS, { module: "warehouse" }).map((x) => x.id)).toEqual(
+      expect.arrayContaining(["warehouse", "bin-location", "put-away", "pick-list", "cross-docking"])
+    );
+    expect(filterWords(WORDS, { subModule: "maintenance-spare-parts" }).map((x) => x.id)).toEqual(
+      expect.arrayContaining(["spare-part", "spare-inventory"])
+    );
+  });
 });
 
 describe("reviewCounts on real content", () => {

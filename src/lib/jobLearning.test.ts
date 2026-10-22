@@ -43,6 +43,31 @@ describe("jobLearning hrefs", () => {
       "/professional-english/meetings-discussions/summarizing-minutes"
     );
   });
+
+  it("links high-touch Batch B words to their approved modules", () => {
+    const expected: Record<string, string> = {
+      budget: "/words?module=finance",
+      workflow: "/words?module=administration",
+      warehouse: "/words?module=warehouse",
+      "audit-trail": "/words?module=administration",
+      milestone: "/words?module=projects",
+      dashboard: "/words?module=bi",
+      payroll: "/words?module=payroll",
+      qc: "/words?module=quality",
+      "finished-goods": "/words?module=inventory",
+      template: "/words?module=documents",
+      "unit-of-measure": "/words?module=inventory",
+    };
+
+    const groups = resolveJobRefs({ wordIds: Object.keys(expected) }, "en");
+    const words = groups.find((group) => group.key === "words")!.items;
+
+    expect(words.map((word) => word.id)).toEqual(Object.keys(expected));
+    expect(words.every((word) => !word.missing)).toBe(true);
+    for (const word of words) {
+      expect(word.href).toBe(expected[word.id]);
+    }
+  });
 });
 
 describe("jobLearning lesson order & navigation", () => {
