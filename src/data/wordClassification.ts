@@ -243,6 +243,7 @@ export const WORD_SUBMODULE: Record<string, string> = {
   "work-order-services": "maintenance-work-orders",
   "maintenance-plan": "maintenance-schedules",
   preventive: "services-work-orders",
+  "preventive-maintenance": "maintenance-preventive",
   corrective: "maintenance-corrective",
   "sla-services": "services-sla",
   "response-time": "services-sla",
@@ -253,6 +254,7 @@ export const WORD_SUBMODULE: Record<string, string> = {
   "spare-part": "maintenance-spare-parts",
   "spare-inventory": "maintenance-spare-parts",
 
+  depreciation: "finance-fixed-assets",
   "petty-cash": "finance-cash",
   "cost-center": "finance-cost",
   "working-capital": "finance-reporting",

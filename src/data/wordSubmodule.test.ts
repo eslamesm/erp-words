@@ -123,9 +123,11 @@ const batchBOverrides = [
   ["workflow", "administration-workflow"],
 ] as const;
 
-const batchBDeferred = [
+const batchCClassification = [
+  ["preventive-maintenance", "maintenance", "maintenance-preventive"],
   ["preventive", "services", "services-work-orders"],
-  ["depreciation", "finance", "finance-gl"],
+  ["depreciation", "finance", "finance-fixed-assets"],
+  ["depreciation-assets", "assets", "assets-depreciation"],
 ] as const;
 
 // Pre-Phase-13.2A baseline hash from HEAD ee917ca (before any mapping edit).
@@ -231,8 +233,8 @@ describe("phase 13.2a batch a submodule moves", () => {
     expect(new Set(batchASubmoduleMoves.map(([id]) => id)).size).toBe(62);
   });
 
-  it("keeps the WORD_SUBMODULE count at the baseline plus 62", () => {
-    expect(Object.keys(WORD_SUBMODULE)).toHaveLength(172);
+  it("keeps the WORD_SUBMODULE count at the approved total", () => {
+    expect(Object.keys(WORD_SUBMODULE)).toHaveLength(174);
     expect(new Set(batchASubmoduleMoves.map(([id]) => id)).size).toBe(62);
 
     for (const [id, target] of batchASubmoduleMoves) {
@@ -345,25 +347,10 @@ describe("phase 13.2b batch b submodule moves", () => {
     }
   });
 
-  it("keeps the deferred Batch C terms unchanged", () => {
-    for (const [id, moduleId, target] of batchBDeferred) {
-      const word = WORDS.find((entry) => entry.id === id);
-      if (!word) throw new Error(`missing word ${id}`);
-      expect(word.module).toBe(moduleId);
-      expect(word.subModuleId).toBe(target);
-      expect(sub(id)).toBe(target);
-    }
-
-    expect(WORD_SUBMODULE.preventive).toBe("services-work-orders");
-    expect(WORD_CLASSIFICATION.preventive).toBeUndefined();
-    expect(WORD_SUBMODULE.depreciation).toBeUndefined();
-    expect(WORD_CLASSIFICATION.depreciation).toBeUndefined();
-  });
-
   it("preserves IDs, mapping count, aggregate counts, and projected coverage", () => {
     expect(WORDS).toHaveLength(433);
     expect(new Set(WORDS.map((word) => word.id)).size).toBe(433);
-    expect(Object.keys(WORD_SUBMODULE)).toHaveLength(172);
+    expect(Object.keys(WORD_SUBMODULE)).toHaveLength(174);
 
     const screenIds = new Set(screenWords.map((word) => word.id));
     const domainWords = WORDS.filter((word) => !screenIds.has(word.id));
@@ -376,7 +363,7 @@ describe("phase 13.2b batch b submodule moves", () => {
     const usedSubModules = new Set(
       domainWords.map((word) => word.subModuleId).filter(Boolean)
     );
-    expect(SUB_MODULES.filter((subModule) => !usedSubModules.has(subModule.id))).toHaveLength(83);
+    expect(SUB_MODULES.filter((subModule) => !usedSubModules.has(subModule.id))).toHaveLength(81);
 
     const populatedModules = new Set(domainWords.map((word) => word.module));
     expect(
@@ -384,5 +371,51 @@ describe("phase 13.2b batch b submodule moves", () => {
         .map((module) => module.id)
         .sort()
     ).toEqual(["planning", "plm", "pos", "scm"]);
+  });
+});
+
+describe("phase 13.2c batch c classification", () => {
+  it("contains exactly four unique approved placements", () => {
+    expect(batchCClassification).toHaveLength(4);
+    expect(new Set(batchCClassification.map(([id]) => id)).size).toBe(4);
+  });
+
+  it.each(batchCClassification)(
+    "resolves %s to %s/%s without an override",
+    (id, moduleId, target) => {
+      const matches = WORDS.filter((entry) => entry.id === id);
+      expect(matches).toHaveLength(1);
+      const word = matches[0];
+      if (!word) throw new Error(`missing word ${id}`);
+
+      expect(word.module).toBe(moduleId);
+      expect(word.subModuleId).toBe(target);
+      expect(sub(id)).toBe(target);
+      expect(WORD_SUBMODULE[id]).toBe(target);
+      expect(WORD_CLASSIFICATION[id]).toBeUndefined();
+      expect(SUB_MODULE_MAP[target], `missing submodule ${target}`).toBeTruthy();
+      expect(SUB_MODULE_MAP[target]?.moduleId).toBe(moduleId);
+    }
+  );
+
+  it("matches the approved module and submodule counts", () => {
+    expect(WORDS.filter((word) => word.status === "published")).toHaveLength(433);
+
+    const moduleCount = (id: string) =>
+      WORDS.filter((word) => word.module === id).length;
+
+    expect(moduleCount("services")).toBe(15);
+    expect(moduleCount("it")).toBe(81);
+    expect(moduleCount("finance")).toBe(50);
+    expect(moduleCount("assets")).toBe(22);
+    expect(moduleCount("maintenance")).toBe(7);
+
+    const submoduleCount = (id: string) =>
+      WORDS.filter((word) => sub(word.id) === id).length;
+
+    expect(submoduleCount("it-databases")).toBe(12);
+    expect(submoduleCount("maintenance-preventive")).toBe(1);
+    expect(submoduleCount("finance-gl")).toBe(21);
+    expect(submoduleCount("finance-fixed-assets")).toBe(1);
   });
 });

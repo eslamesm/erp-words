@@ -1680,7 +1680,7 @@ const RAW_WORDS: Word[] = [
     definitionEn: "Regular maintenance to prevent failures.",
     definitionAr: "صيانة دورية مانعة للأعطال.",
     note: "عكسها corrective maintenance.",
-    module: "it",
+    module: "maintenance",
     level: "B2",
     examples: ["Run preventive maintenance on servers.", "Preventive maintenance reduces incidents."],
     examplesAr: ["نفّذ صيانة وقائية للخوادم.", "تقلّل الصيانة الوقائية الحوادث."],
