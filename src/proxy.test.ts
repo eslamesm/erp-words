@@ -3,10 +3,13 @@ import { join } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import {
+  ADMIN_CONTENT_PREFIX,
   JOB_ROUTE_PREFIX,
   RESERVED_404_PATH,
   buildReadyRoutes,
   config,
+  hasSupabaseAuthCookie,
+  isAdminContentRoute,
   isAllowedInRoutes,
   isAllowedJobRoute,
   proxy,
@@ -20,9 +23,81 @@ function requestFor(pathname: string): NextRequest {
   return new NextRequest(`http://localhost${pathname}`);
 }
 
+function requestWithCookie(pathname: string, cookie: string): NextRequest {
+  return new NextRequest(`http://localhost${pathname}`, {
+    headers: { cookie },
+  });
+}
+
 describe("Phase 11.2C - proxy matcher", () => {
-  it("targets only the Job-Based Learning prefix", () => {
-    expect(config.matcher).toEqual(["/job-based-learning/:path*"]);
+  it("targets Job-Based Learning and the protected admin content route", () => {
+    expect(config.matcher).toEqual([
+      "/job-based-learning/:path*",
+      "/admin/content",
+      "/admin/content/:path*",
+    ]);
+  });
+});
+
+describe("Phase 14.1B - admin route matching", () => {
+  it("matches only /admin/content and its subpaths", () => {
+    expect(isAdminContentRoute("/admin/content")).toBe(true);
+    expect(isAdminContentRoute("/admin/content/")).toBe(true);
+    expect(isAdminContentRoute("/admin/content/review")).toBe(true);
+    expect(isAdminContentRoute("/admin")).toBe(false);
+    expect(isAdminContentRoute("/admin/content-other")).toBe(false);
+    expect(isAdminContentRoute("/")).toBe(false);
+    expect(ADMIN_CONTENT_PREFIX).toBe("/admin/content");
+  });
+});
+
+describe("Phase 14.1B - admin proxy gate", () => {
+  it("redirects anonymous requests to sign-in with a return path", async () => {
+    const response = await proxy(requestFor("/admin/content"));
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location") as string);
+    expect(location.pathname).toBe("/settings");
+    expect(location.searchParams.get("next")).toBe("/admin/content");
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(response.headers.get("vary")).toBe("Cookie");
+  });
+
+  it("preserves the query string in the return path", async () => {
+    const response = await proxy(requestFor("/admin/content?tab=review"));
+    const location = new URL(response.headers.get("location") as string);
+    expect(location.searchParams.get("next")).toBe("/admin/content?tab=review");
+  });
+
+  it("does not treat unrelated cookies as an authenticated session", async () => {
+    const response = await proxy(
+      requestWithCookie("/admin/content", "role=admin; theme=dark")
+    );
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/settings");
+  });
+
+  it("lets a Supabase session cookie reach the authoritative page check", async () => {
+    const response = await proxy(
+      requestWithCookie("/admin/content", "sb-projectref-auth-token=opaque")
+    );
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(response.headers.get("vary")).toBe("Cookie");
+  });
+
+  it("recognises chunked Supabase session cookies only", () => {
+    expect(
+      hasSupabaseAuthCookie(
+        requestWithCookie("/admin/content", "sb-projectref-auth-token.0=opaque")
+      )
+    ).toBe(true);
+    expect(
+      hasSupabaseAuthCookie(requestWithCookie("/admin/content", "sb-projectref-auth-token.1=opaque"))
+    ).toBe(true);
+    expect(
+      hasSupabaseAuthCookie(requestWithCookie("/admin/content", "sb-projectref-auth-token-other=x"))
+    ).toBe(false);
+    expect(hasSupabaseAuthCookie(requestFor("/admin/content"))).toBe(false);
   });
 });
 
@@ -176,19 +251,19 @@ describe("Phase 11.2C - reserved unmatched route", () => {
 });
 
 describe("Phase 11.2C - proxy responses", () => {
-  it("passes allowed requests through without added cache headers", () => {
-    const response = proxy(requestFor(`${JOB_ROUTE_PREFIX}/erp-accountant`));
+  it("passes allowed requests through without added cache headers", async () => {
+    const response = await proxy(requestFor(`${JOB_ROUTE_PREFIX}/erp-accountant`));
     expect(response.headers.get("x-middleware-next")).toBe("1");
     expect(response.headers.get("cache-control")).toBeNull();
   });
 
-  it("rewrites rejected requests to the reserved route with no-store", () => {
+  it("rewrites rejected requests to the reserved route with no-store", async () => {
     for (const pathname of [
       `${JOB_ROUTE_PREFIX}/manufacturing-planner`,
       `${JOB_ROUTE_PREFIX}/warehouse-officer/receiving-goods`,
       `${JOB_ROUTE_PREFIX}/does-not-exist`,
     ]) {
-      const response = proxy(requestFor(pathname));
+      const response = await proxy(requestFor(pathname));
       const rewrite = response.headers.get("x-middleware-rewrite");
       expect(rewrite, pathname).toBeTruthy();
       expect(rewrite?.endsWith(RESERVED_404_PATH), pathname).toBe(true);
@@ -197,11 +272,11 @@ describe("Phase 11.2C - proxy responses", () => {
     }
   });
 
-  it("does not branch on request method or RSC headers", () => {
-    const headResponse = proxy(
+  it("does not branch on request method or RSC headers", async () => {
+    const headResponse = await proxy(
       new NextRequest(`http://localhost${JOB_ROUTE_PREFIX}/warehouse-officer`, { method: "HEAD" })
     );
-    const rscResponse = proxy(
+    const rscResponse = await proxy(
       new NextRequest(`http://localhost${JOB_ROUTE_PREFIX}/warehouse-officer`, {
         headers: { RSC: "1" },
       })
@@ -214,11 +289,15 @@ describe("Phase 11.2C - proxy responses", () => {
 });
 
 describe("Phase 11.2C - proxy import hygiene", () => {
-  it("imports only next/server and the generated index", () => {
+  it("keeps job routing on the generated index and admin gating dependency-free", () => {
     const source = readFileSync(join(process.cwd(), "src", "proxy.ts"), "utf8");
     expect(source).toContain('from "next/server"');
     expect(source).toContain('from "./data/jobPathRouteIndex.generated"');
+    expect(source).toContain("hasSupabaseAuthCookie");
+    expect(source).not.toContain('from "@supabase/ssr"');
+    expect(source).not.toContain('from "@supabase/supabase-js"');
     expect(source).not.toMatch(/from\s+["'][^"']*(?:jobPaths|JOB_PATHS)[^"']*["']/);
-    expect(source).not.toMatch(/supabase|useSync|@\/auth|@\/data/);
+    expect(source).not.toMatch(/from\s+["']@\/data\/(?:words|modules|subModules|contentValidation)["']/);
+    expect(source).not.toMatch(/SERVICE_ROLE|service_role|SUPABASE_SERVICE/i);
   });
 });

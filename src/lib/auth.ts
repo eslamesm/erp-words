@@ -28,13 +28,15 @@ export interface AuthResult {
   needsConfirm?: boolean;
 }
 
+/** Public sign-up may only submit credentials; it can never submit role metadata. */
+export function signUpCredentials(email: string, password: string) {
+  return { email: email.trim(), password };
+}
+
 export async function signUp(email: string, password: string): Promise<AuthResult> {
   const sb = getSupabase();
   if (!sb) return { ok: false, error: "المزامنة السحابية غير مهيأة." };
-  const { data, error } = await sb.auth.signUp({
-    email: email.trim(),
-    password,
-  });
+  const { data, error } = await sb.auth.signUp(signUpCredentials(email, password));
   if (error) return { ok: false, error: ar(error.message) };
   return { ok: true, needsConfirm: !data.session };
 }

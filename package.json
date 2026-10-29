@@ -18,6 +18,7 @@
     "smoke:routes": "node scripts/smoke-job-routes.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
     "next": "16.4.3",
     "react": "19.3.0",
