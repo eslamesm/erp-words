@@ -1,3 +1,5 @@
+import "server-only";
+
 import { cache } from "react";
 import { resolveAdminSession } from "@/lib/adminAccess";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
