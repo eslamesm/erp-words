@@ -5,12 +5,13 @@
   --blue-2: #1d4ed8;
   --teal: #10b981;
   --teal-2: #4fc3c0;
+  --teal-strong: #047857;
   --purple: #8b5cf6;
   --tint: #eaf2fd;
   --tint-2: #dbe8fb;
   --bg-top: #ffffff;
   --bg-bottom: #f3f8ff;
-  --muted: #6b7a99;
+  --muted: #5a6b8c;
   --text: #12244d;
   --card: #ffffff;
   --border: #dbe5f5;
@@ -29,7 +30,7 @@
   --card: #121b33;
   --border: #243256;
   --text: #e6ecff;
-  --muted: #8fa0c8;
+  --muted: #a3b3d6;
   --shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
 }
 
@@ -54,7 +55,7 @@
 .logo--full { flex-direction: column; text-align: center; gap: 6px; }
 .logo__word { font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
 .logo__word .erp { color: var(--navy); }
-.logo__word .words { color: var(--teal); }
+.logo__word .words { color: var(--teal-strong); }
 .logo__tag { color: var(--muted); font-size: 0.85rem; font-weight: 500; }
 .logo--compact .logo__word { font-size: 1.15rem; }
 .logo--compact .logo__tag { font-size: 0.62rem; }

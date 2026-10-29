@@ -61,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="border-t border-slate-200 py-4 pb-24 text-center text-xs text-slate-500 sm:pb-4 dark:border-slate-800 dark:text-slate-400">
           <span>ERP Words — تعلم المفردات الإنجليزية لأنظمة Enterprise Resource Planning</span>
           <span className="mx-2">·</span>
-          <Link href="/about" className="font-semibold text-emerald-600 hover:underline dark:text-emerald-400">
+          <Link href="/about" className="font-semibold text-[var(--teal-strong)] hover:underline dark:text-emerald-400">
             عن التطبيق
           </Link>
         </footer>

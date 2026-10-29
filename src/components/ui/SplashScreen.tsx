@@ -36,7 +36,6 @@ export function SplashScreen({
     <button
       type="button"
       onClick={onDone}
-      aria-label="Continue"
       className="fixed inset-0 z-50 block w-full cursor-pointer border-0 bg-transparent p-0 text-start"
     >
       {content}
