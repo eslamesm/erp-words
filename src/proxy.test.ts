@@ -1,15 +1,28 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// This suite covers routing/matching only: force "not configured" so the admin
+// branch always fails closed without a network call. Session refresh itself is
+// covered in proxy.auth.test.ts.
+vi.mock("@/lib/supabaseConfig", () => ({
+  SUPABASE_URL: undefined,
+  SUPABASE_ANON_KEY: undefined,
+  supabaseConfigured: false,
+  SUPABASE_COOKIE_OPTIONS: { path: "/" },
+}));
+
 import {
   ADMIN_CONTENT_PREFIX,
+  ADMIN_PREFIX,
   JOB_ROUTE_PREFIX,
   RESERVED_404_PATH,
   buildReadyRoutes,
   config,
   hasSupabaseAuthCookie,
   isAdminContentRoute,
+  isAdminRoute,
   isAllowedInRoutes,
   isAllowedJobRoute,
   proxy,
@@ -30,12 +43,8 @@ function requestWithCookie(pathname: string, cookie: string): NextRequest {
 }
 
 describe("Phase 11.2C - proxy matcher", () => {
-  it("targets Job-Based Learning and the protected admin content route", () => {
-    expect(config.matcher).toEqual([
-      "/job-based-learning/:path*",
-      "/admin/content",
-      "/admin/content/:path*",
-    ]);
+  it("targets Job-Based Learning and every admin route", () => {
+    expect(config.matcher).toEqual(["/job-based-learning/:path*", "/admin/:path*"]);
   });
 });
 
@@ -48,6 +57,17 @@ describe("Phase 14.1B - admin route matching", () => {
     expect(isAdminContentRoute("/admin/content-other")).toBe(false);
     expect(isAdminContentRoute("/")).toBe(false);
     expect(ADMIN_CONTENT_PREFIX).toBe("/admin/content");
+  });
+
+  it("matches every route under /admin so future admin pages are covered", () => {
+    expect(ADMIN_PREFIX).toBe("/admin");
+    expect(isAdminRoute("/admin")).toBe(true);
+    expect(isAdminRoute("/admin/content")).toBe(true);
+    expect(isAdminRoute("/admin/content/review")).toBe(true);
+    expect(isAdminRoute("/admin/users")).toBe(true);
+    expect(isAdminRoute("/administrator")).toBe(false);
+    expect(isAdminRoute("/adminx/content")).toBe(false);
+    expect(isAdminRoute("/")).toBe(false);
   });
 });
 
@@ -76,13 +96,21 @@ describe("Phase 14.1B - admin proxy gate", () => {
     expect(response.headers.get("location")).toContain("/settings");
   });
 
-  it("lets a Supabase session cookie reach the authoritative page check", async () => {
+  it("fails closed when Supabase is not configured, even with a session cookie", async () => {
     const response = await proxy(
       requestWithCookie("/admin/content", "sb-projectref-auth-token=opaque")
     );
-    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/settings");
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(response.headers.get("vary")).toBe("Cookie");
+  });
+
+  it("gates future admin routes too", async () => {
+    const response = await proxy(requestFor("/admin/users"));
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location") as string);
+    expect(location.searchParams.get("next")).toBe("/admin/users");
   });
 
   it("recognises chunked Supabase session cookies only", () => {
@@ -289,12 +317,16 @@ describe("Phase 11.2C - proxy responses", () => {
 });
 
 describe("Phase 11.2C - proxy import hygiene", () => {
-  it("keeps job routing on the generated index and admin gating dependency-free", () => {
+  it("keeps job routing on the generated index and the admin gate on the SSR client", () => {
     const source = readFileSync(join(process.cwd(), "src", "proxy.ts"), "utf8");
     expect(source).toContain('from "next/server"');
     expect(source).toContain('from "./data/jobPathRouteIndex.generated"');
     expect(source).toContain("hasSupabaseAuthCookie");
-    expect(source).not.toContain('from "@supabase/ssr"');
+    // Phase 14.1B.2: the proxy refreshes sessions through the supported SSR
+    // client, but must not import supabase-js directly or any privileged key.
+    expect(source).toContain('from "@supabase/ssr"');
+    expect(source).toContain("createServerClient");
+    expect(source).toContain("auth.getUser()");
     expect(source).not.toContain('from "@supabase/supabase-js"');
     expect(source).not.toMatch(/from\s+["'][^"']*(?:jobPaths|JOB_PATHS)[^"']*["']/);
     expect(source).not.toMatch(/from\s+["']@\/data\/(?:words|modules|subModules|contentValidation)["']/);

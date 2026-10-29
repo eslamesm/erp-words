@@ -41,13 +41,21 @@ describe("Phase 14.1B - admin page authorization boundary", () => {
     expect(client).not.toMatch(/\bservice[_ -]?role\b/i);
   });
 
-  it("gates /admin/content in proxy without shipping auth libraries", () => {
-    expect(proxy).toContain("ADMIN_CONTENT_PREFIX");
-    expect(proxy).toContain("isAdminContentRoute");
+  it("gates every /admin route in proxy and keeps secrets out", () => {
+    expect(proxy).toContain("ADMIN_PREFIX");
+    expect(proxy).toContain("isAdminRoute");
     expect(proxy).toContain("hasSupabaseAuthCookie");
     expect(proxy).toContain("private, no-store");
-    expect(proxy).not.toContain('from "@supabase/');
+    expect(proxy).toContain("getUser");
     expect(proxy).not.toMatch(/SERVICE_ROLE|service_role|SUPABASE_SERVICE/i);
+  });
+
+  it("protects admin routes with a layout-level gate", () => {
+    const layout = source("src/app/admin/layout.tsx");
+    expect(layout).not.toContain('"use client"');
+    expect(layout).toContain("getAdminAccess");
+    expect(layout).toContain("access.status !== \"admin\"");
+    expect(layout).toContain("instant = false");
   });
 
   it("introduces no unprotected admin data endpoint", () => {

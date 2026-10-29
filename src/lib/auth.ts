@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { clearProtectedContentCache } from "@/lib/protectedCache";
 
 export interface AuthUser {
   id: string;
@@ -54,8 +55,9 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 
 export async function signOut(): Promise<void> {
   const sb = getSupabase();
-  if (!sb) return;
-  await sb.auth.signOut();
+  if (sb) await sb.auth.signOut();
+  // Drop any cached admin HTML so a shared device cannot read it offline.
+  clearProtectedContentCache();
 }
 
 export async function sendReset(email: string): Promise<AuthResult> {

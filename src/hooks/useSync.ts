@@ -12,6 +12,7 @@ import {
   type SyncState,
 } from "@/lib/sync";
 import type { AuthUser } from "@/lib/auth";
+import { clearProtectedContentCache } from "@/lib/protectedCache";
 
 function toUser(session: Session | null): AuthUser | null {
   if (!session?.user) return null;
@@ -51,6 +52,7 @@ function ensureStarted() {
   });
   sb.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") recovering = true;
+    if (event === "SIGNED_OUT") clearProtectedContentCache();
     user = toUser(session);
     loading = false;
     emit();
