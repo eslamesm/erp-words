@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { clearProtectedContentCache } from "@/lib/protectedCache";
 
 export interface AuthUser {
   id: string;
@@ -28,13 +29,15 @@ export interface AuthResult {
   needsConfirm?: boolean;
 }
 
+/** Public sign-up may only submit credentials; it can never submit role metadata. */
+export function signUpCredentials(email: string, password: string) {
+  return { email: email.trim(), password };
+}
+
 export async function signUp(email: string, password: string): Promise<AuthResult> {
   const sb = getSupabase();
   if (!sb) return { ok: false, error: "المزامنة السحابية غير مهيأة." };
-  const { data, error } = await sb.auth.signUp({
-    email: email.trim(),
-    password,
-  });
+  const { data, error } = await sb.auth.signUp(signUpCredentials(email, password));
   if (error) return { ok: false, error: ar(error.message) };
   return { ok: true, needsConfirm: !data.session };
 }
@@ -52,8 +55,9 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 
 export async function signOut(): Promise<void> {
   const sb = getSupabase();
-  if (!sb) return;
-  await sb.auth.signOut();
+  if (sb) await sb.auth.signOut();
+  // Drop any cached admin HTML so a shared device cannot read it offline.
+  clearProtectedContentCache();
 }
 
 export async function sendReset(email: string): Promise<AuthResult> {

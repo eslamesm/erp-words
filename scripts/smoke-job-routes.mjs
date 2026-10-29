@@ -11,7 +11,11 @@ const BUILD_ID = join(ROOT, ".next", "BUILD_ID");
 const NEXT_BIN = join(ROOT, "node_modules", "next", "dist", "bin", "next");
 const PORT = Number(process.env.SMOKE_PORT || 3310);
 const BASE = `http://127.0.0.1:${PORT}`;
-const BUDGET_BYTES = 350 * 1024;
+// كلفة ملف Proxy بقية: كانت 350 KB قبل Phase 14.1B.2 عندما لم يكن يضم عميل
+// Supabase SSR. أصبح العنوان مرتفعًا بسبب مكتبة @supabase/ssr المطلوبة لإعادة
+// التوكن السرية عبر proxy (Phase 14.1B.1 F1 / Phase 14.1B.2 F1). هذا حماية
+// مالية فقط من الإفراط في الاستدلال، لا حد أماني.
+const BUDGET_BYTES = 512 * 1024;
 const LEAK_MARKERS = [
   "ERP Warehouse Officer",
   "Twelve lessons covering warehouse operations",

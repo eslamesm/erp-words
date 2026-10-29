@@ -1,20 +1,23 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  SUPABASE_ANON_KEY,
+  SUPABASE_COOKIE_OPTIONS,
+  SUPABASE_URL,
+  supabaseConfigured,
+} from "@/lib/supabaseConfig";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-export const supabaseEnabled = Boolean(
-  url && anonKey && !anonKey.includes("REPLACE_WITH")
-);
+export const supabaseEnabled = supabaseConfigured;
 
 let client: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient | null {
   if (!supabaseEnabled) return null;
   if (!client) {
-    client = createClient(url as string, anonKey as string, {
+    client = createBrowserClient(SUPABASE_URL as string, SUPABASE_ANON_KEY as string, {
+      isSingleton: true,
+      cookieOptions: SUPABASE_COOKIE_OPTIONS,
       auth: {
-        persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },

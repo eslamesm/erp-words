@@ -1,5 +1,5 @@
 /* Service Worker: تحديث ذاتي + شبكة أولًا مع تخزين احتياطي للعمل دون اتصال */
-const VERSION = "mvcsfqnq";
+const VERSION = "mvtfl0fi";
 const CACHE = `erp-vocab-${VERSION}`;
 const CORE = [
   "/",
@@ -26,7 +26,34 @@ const ROUTES = [
 
 const STATIC_RE = /\/_next\/static\/[^"'\s\\)<>]+/g;
 
+// مسارات إدارية تحتوي بيانات حساسة بعد تسجيل الدخول: لا تُخزَّن مسبقًا، ولا تُخزَّن
+// وقت التشغيل، ولا تُخدَم من الكاش أو من صفحة البداية عند انقطاع الاتصال.
+const PROTECTED_RE = /^\/admin(?:\/|$)/;
+const PROTECTED_CACHE_MESSAGE = "CLEAR_PROTECTED_CACHE";
+
+function isProtectedPath(pathname) {
+  return PROTECTED_RE.test(pathname);
+}
+
+// يمسح أي نسخة إدارية قد تكون خُزِّنت قبل هذا التحديث (أو في نسخة سابقة من التطبيق).
+async function purgeProtectedCache() {
+  const keys = await caches.keys();
+  await Promise.all(
+    keys.map(async (key) => {
+      const cache = await caches.open(key);
+      const requests = await cache.keys();
+      await Promise.all(
+        requests
+          .filter((request) => isProtectedPath(new URL(request.url).pathname))
+          .map((request) => cache.delete(request))
+      );
+    })
+  );
+}
+
 async function precacheRoute(cache, url) {
+  // حماية مزدوجة: لا يُخزَّن أي مسار إداري حتى لو أُضيف مستقبلًا إلى القوائم.
+  if (isProtectedPath(new URL(url, self.location.origin).pathname)) return;
   try {
     const res = await fetch(url, { cache: "reload" });
     if (!res || res.status !== 200) return;
@@ -63,9 +90,21 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// يسمح للصفحة بطلب تفعيل النسخة المنتظرة فورًا
+// يسمح للصفحة بطلب تفعيل النسخة المنتظرة فورًا، أو مسح الكاش الإداري بعد الخروج.
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+  if (!event.data) return;
+  if (event.data.type === "SKIP_WAITING") self.skipWaiting();
+  if (event.data.type === PROTECTED_CACHE_MESSAGE) {
+    event.waitUntil(
+      purgeProtectedCache()
+        .then(() => {
+          if (event.source && event.source.postMessage) {
+            event.source.postMessage({ type: `${PROTECTED_CACHE_MESSAGE}_DONE` });
+          }
+        })
+        .catch(() => {})
+    );
+  }
 });
 
 self.addEventListener("activate", (event) => {
@@ -73,6 +112,7 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
+      await purgeProtectedCache();
       await self.clients.claim();
     })()
   );
@@ -116,6 +156,15 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+
+  // المسارات الإدارية: شبكة فقط بلا كاش وبلا بديل من الكاش أو صفحة البداية.
+  if (isProtectedPath(url.pathname)) {
+    event.respondWith(
+      fetch(req, { cache: "no-store" }).catch(() => offlineResponse())
+    );
+    return;
+  }
+
   // واجهات API (الإصدار وغيره) لا تُخزَّن أبدًا
   if (url.pathname.startsWith("/api/") || url.pathname === "/version.json") return;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { sendReset, signIn, signUp } from "@/lib/auth";
 
 type Mode = "signin" | "signup" | "reset";
@@ -9,12 +10,29 @@ interface Props {
   onLoggedIn?: () => void;
 }
 
+function requestedDestination(): string | null {
+  if (typeof window === "undefined") return null;
+  if (window.location.pathname !== "/settings") return null;
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\")) {
+    return null;
+  }
+  return next;
+}
+
 export function AuthPanel({ onLoggedIn }: Props) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [pending, setPending] = useState(false);
+
+  function finishLogin() {
+    onLoggedIn?.();
+    const next = requestedDestination();
+    if (next) router.replace(next);
+  }
 
   const title =
     mode === "signin" ? "تسجيل الدخول" : mode === "signup" ? "إنشاء حساب" : "استعادة كلمة المرور";
@@ -44,7 +62,7 @@ export function AuthPanel({ onLoggedIn }: Props) {
           setMode("signin");
         } else {
           setMsg({ kind: "ok", text: "تم إنشاء حسابك وتسجيل الدخول ✓" });
-          onLoggedIn?.();
+          finishLogin();
         }
       } else if (mode === "signin") {
         const res = await signIn(email, password);
@@ -52,7 +70,7 @@ export function AuthPanel({ onLoggedIn }: Props) {
           setMsg({ kind: "err", text: res.error ?? "تعذّر تسجيل الدخول." });
         } else {
           setMsg({ kind: "ok", text: "تم تسجيل الدخول ✓" });
-          onLoggedIn?.();
+          finishLogin();
         }
       } else {
         const res = await sendReset(email);
