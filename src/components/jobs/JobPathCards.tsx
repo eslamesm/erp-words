@@ -53,7 +53,7 @@ export function JobPathCards({ paths }: { paths: JobPath[] }) {
           <Link
             key={p.id}
             href={jobPathHref(p.slug)}
-            className={`${baseCls} border-emerald-200 bg-white hover:-translate-y-0.5 hover:shadow-md dark:border-emerald-900 dark:bg-slate-900`}
+            className={`${baseCls} border-emerald-200 bg-white hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-emerald-200 dark:border-emerald-900 dark:bg-slate-900`}
           >
             {body}
           </Link>
@@ -61,6 +61,7 @@ export function JobPathCards({ paths }: { paths: JobPath[] }) {
           <div
             key={p.id}
             className={`${baseCls} border-slate-200 bg-slate-50 opacity-80 dark:border-slate-800 dark:bg-slate-900/60`}
+            aria-label={t("job.comingSoonAria", { title: title })}
           >
             {body}
           </div>
