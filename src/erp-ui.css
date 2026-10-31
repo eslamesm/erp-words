@@ -78,6 +78,9 @@
   display: grid; place-items: center; cursor: pointer; color: var(--text);
 }
 .icon-btn:focus-visible, .btn:focus-visible, .nav__item:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.topnav a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
+.drawer__item:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.drawer-backdrop--close { border: 0; padding: 0; cursor: pointer; display: block; background: rgba(8, 18, 44, 0.55); }
 
 /* ---------- Cards ---------- */
 .card { background: var(--tint); border-radius: var(--radius-card); padding: 16px; }

@@ -101,6 +101,37 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* استكمال التعلم: إجراءات سريعة من نقطة التحول */}
+      <section className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card)] p-5 shadow-lg">
+        <h2 className="text-lg font-bold text-[var(--navy)]">{t("home.continueTitle")}</h2>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Link
+            href="/learn"
+            className="rounded-2xl bg-[var(--blue)] px-5 py-3 text-center font-bold text-white shadow transition-transform hover:scale-[1.02]"
+          >
+            {t("home.reviewNow")}{dueForPlan > 0 ? ` (${dueForPlan})` : ""}
+          </Link>
+          <Link
+            href="/quiz"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--tint)] px-5 py-3 text-center font-bold text-[var(--navy)] transition-colors hover:bg-[var(--tint-2)]"
+          >
+            {t("home.quickQuiz")}
+          </Link>
+          <Link
+            href="/daily"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--tint)] px-5 py-3 text-center font-bold text-[var(--navy)] transition-colors hover:bg-[var(--tint-2)]"
+          >
+            {t("home.dailyTitle")}
+          </Link>
+          <Link
+            href="/assistant"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--tint)] px-5 py-3 text-center font-bold text-[var(--navy)] transition-colors hover:bg-[var(--tint-2)]"
+          >
+            {t("brand.startChat")}
+          </Link>
+        </div>
+      </section>
+
       {/* رسالة تحفيزية */}
       <section className="rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-center text-sm font-medium text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200">
         💬 {quote}

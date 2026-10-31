@@ -22,7 +22,7 @@ export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => v
   return (
     <nav className="nav" aria-label="Main">
       {items.map(({ id, label, Icon }) => (
-        <button key={id} className="nav__item" aria-current={tab === id ? "page" : undefined} onClick={() => onChange(id)}>
+        <button key={id} type="button" className="nav__item" aria-current={tab === id ? "page" : undefined} onClick={() => onChange(id)}>
           <Icon size={24} />
           {label}
         </button>

@@ -654,6 +654,7 @@ const ar: Dict = {
   "home.mistakesReview": "راجع ←",
   "home.dueDesc": "لديك {n} كلمة للتعلم اليوم — اقضِ حاجتها في 10 دقائق ←",
   "home.modulesTitle": "وحدات التعلّم",
+  "home.continueTitle": "🎯 متابعة التعلم",
 
   // الإعداد الأولي
   "onb.testTitle": "📝 اختبار تحديد المستوى",
@@ -1557,6 +1558,7 @@ const en: Dict = {
   "home.mistakesReview": "Review →",
   "home.dueDesc": "You have {n} words to learn today — finish them in 10 minutes →",
   "home.modulesTitle": "Learning modules",
+  "home.continueTitle": "🎯 Continue learning",
 
   "onb.testTitle": "📝 Placement test",
   "onb.testIntro": "Welcome {name}. We'll answer a few quick questions to know your current level, then build the most motivating study plan for you.",

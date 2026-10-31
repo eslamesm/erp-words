@@ -39,7 +39,7 @@ export function SideMenu({ open, lang, active, onSelect, onClose, onLangChange }
   if (!open) return null;
   return (
     <>
-      <div className="drawer-backdrop" onClick={onClose} />
+      <button type="button" className="drawer-backdrop drawer-backdrop--close" onClick={onClose} aria-label="Close menu" />
       <aside className="drawer" role="dialog" aria-modal="true" aria-label="Menu">
         <Logo variant="compact" />
         <nav>

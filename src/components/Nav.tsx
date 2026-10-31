@@ -77,7 +77,7 @@ export function Nav() {
 
   return (
     <>
-      <nav className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+      <nav className="topnav sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
         <div className="mx-auto max-w-3xl px-3 pt-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1">
@@ -117,10 +117,11 @@ export function Nav() {
               <Link
                 key={l.href}
                 href={l.href}
+                aria-current={isActive(l.href) ? "page" : undefined}
                 className={`flex items-center rounded-lg px-3 py-1.5 whitespace-nowrap transition-colors ${
                   isActive(l.href)
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+                    ? "bg-[var(--navy)] text-white dark:bg-[var(--blue)] dark:text-white"
+                    : "text-[var(--muted)] hover:bg-[var(--tint)] dark:text-[var(--muted)] dark:hover:bg-[var(--tint-2)]"
                 }`}
               >
                 <span className="ml-1">{l.icon}</span>
